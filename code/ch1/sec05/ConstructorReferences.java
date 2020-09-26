@@ -8,14 +8,25 @@ import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.stage.*;
 
+/**
+* 构造器引用：与方法引用相同，只是构造器的方法名称为new；当有多个构造器时，使用哪个取决于上下文
+* 例如：下面的Button::new等价于 x -> new Button(x)
+* 
+* 
+*/
+
 public class ConstructorReferences extends Application {
    public void start(Stage stage) {
       List<String> labels = Arrays.asList("Ok", "Cancel", "Yes", "No", "Maybe");
+      
+      // Button::new 等价于 labelString -> new Button(labelString)
+      // 调用了Button(String)构造函数
       Stream<Button> stream = labels.stream().map(Button::new);
       List<Button> buttons = stream.collect(Collectors.toList());
-
       System.out.println(buttons);
 
+      // Button::new 等价于 streamObj -> new Button(streamObj)
+      // 调用了Button(Object)构造函数（labels.stream()返回的是Object[]，然后map函数将数组中的每一个Object传给Button::new)
       stream = labels.stream().map(Button::new);
       Object[] buttons2 = stream.toArray();
       System.out.println(buttons2.getClass());
@@ -23,8 +34,14 @@ public class ConstructorReferences extends Application {
       // The following generates a ClassCastException
       // stream = labels.stream().map(Button::new);
       // Button[] buttons3 = (Button[]) stream.toArray();
-
+      
+      // stream存储的是Button[]
+      //    如果向上面那样调用stream.toArray()、返回的是Object[]
+      //    如果调用另一个方法A[] toArray(IntFunction<A[]> generator)，可以返回泛型数组A[]
       stream = labels.stream().map(Button::new);
+      // Button[]::new 等价于 n -> new Button[n]
+      // 可以提供给Stream的A[] toArray(IntFunction<A[]> generator)方法
+      // 参考：https://kapeli.com/dash_share?docset_file=Java&docset_name=Java%20SE8&path=java/util/stream/Stream.html%23toArray-java.util.function.IntFunction-&platform=java&repo=Main&version=SE8 
       Button[] buttons4 = stream.toArray(Button[]::new);
 
       final double rem = Font.getDefault().getSize();
