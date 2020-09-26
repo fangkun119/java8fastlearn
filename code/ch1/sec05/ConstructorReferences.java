@@ -12,7 +12,12 @@ import javafx.stage.*;
 * 构造器引用：与方法引用相同，只是构造器的方法名称为new；当有多个构造器时，使用哪个取决于上下文
 * 例如：下面的Button::new等价于 x -> new Button(x)
 * 
+* 使用数组类型编写构造器引用: 
+* 例如: int[]::new 等价于 n -> new int[n]
 * 
+* 数组类型构造器引用，可以解决Java 6的泛型数组问题
+* Java 6中，Button[]无法用通过泛型new T[]来生成，因为会被擦除为Object[]
+* Java 8中，使用Button[]::new可以生成Buttong[]数组，避开被擦除的问题
 */
 
 public class ConstructorReferences extends Application {
