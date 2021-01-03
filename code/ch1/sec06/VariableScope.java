@@ -55,7 +55,6 @@ public class VariableScope {
                   // ERROR: Illegal to mutate matches
                }}).start();
    }
-   */
 
    private static int matches;
    

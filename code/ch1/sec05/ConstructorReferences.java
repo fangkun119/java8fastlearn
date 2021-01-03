@@ -2,6 +2,7 @@ import java.util.*;
 import java.util.stream.*;
 
 import javafx.application.*;
+import javafx.application.Application;
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -21,6 +22,10 @@ import javafx.stage.*;
 */
 
 public class ConstructorReferences extends Application {
+   public static void main(String[] args) {
+      Application.launch(args);
+   }
+
    public void start(Stage stage) {
       List<String> labels = Arrays.asList("Ok", "Cancel", "Yes", "No", "Maybe");
       
@@ -47,7 +52,7 @@ public class ConstructorReferences extends Application {
       // Button[]::new 等价于 n -> new Button[n]
       // 可以提供给Stream的A[] toArray(IntFunction<A[]> generator)方法
       // 参考：https://kapeli.com/dash_share?docset_file=Java&docset_name=Java%20SE8&path=java/util/stream/Stream.html%23toArray-java.util.function.IntFunction-&platform=java&repo=Main&version=SE8 
-      Button[] buttons4 = stream.toArray(Button[]::new);
+      Button[] buttons4 = stream.toArray(Button[]::new); // 等价于n -> new Button[n]
 
       final double rem = Font.getDefault().getSize();
       HBox box = new HBox(0.8 * rem); 

@@ -1,5 +1,7 @@
+import java.io.IOException;
 import java.util.*;
 import javafx.application.*;
+import javafx.application.Application;
 import javafx.event.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
@@ -24,16 +26,31 @@ import javafx.stage.*;
 */
 
 public class MethodReferences extends Application {
-   public void start(Stage stage) {
-      // String::compareToIgnoreCase 等价于 (x,y) -> x.compareToIgnoreCase(y)
+   public static int cmp(String left, String right) {
+      return left.compareToIgnoreCase(right);
+   }
+
+   public static void main(String[] args) {
       String[] strings = "Mary had a little lamb".split(" ");
-      Arrays.sort(strings, String::compareToIgnoreCase);
+
+      // 形式1："对象::实例方法"
+      Arrays.sort(strings, String::compareToIgnoreCase); // 等价于 (x,y) -> x.compareToIgnoreCase(y)
       System.out.println(Arrays.toString(strings));
 
+      // 形式2："类::静态方法"
+      Arrays.sort(strings, MethodReferences::cmp); //等价于 (x,y) -> MethodReferences.cmp(x, y)
+      System.out.println(Arrays.toString(strings));
+
+
+      Application.launch(args);
+   }
+
+   public void start(Stage stage) {
+      // 形式1：
       // System.out::println 等价于 button.setOnAction(x -> System.out.println(x))
-      Button button = new Button("Click me!");
-      button.setOnAction(System.out::println);
-      stage.setScene(new Scene(button));
+      Button button1 = new Button("button 1");
+      button1.setOnAction(System.out::println); //等价于 str -> System.out.println(str)
+      stage.setScene(new Scene(button1));
       stage.show();
    }
 }

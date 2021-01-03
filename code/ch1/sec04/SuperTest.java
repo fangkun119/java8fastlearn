@@ -1,3 +1,6 @@
+import java.util.Arrays;
+import java.util.List;
+
 /**
 * 方法引用：直接向调用方的函数传递方法名称，来作为lambda表达式的简写，有如下几种简写语法：
 * 
@@ -19,19 +22,30 @@
 public class SuperTest {
    public static void main(String[] args) {
       class Greeter {
-         public void greet() { 
-            System.out.println("Hello, world!"); 
+         public void greet() {
+            System.out.println("Hello, world!");
          }
       }
 
       class ConcurrentGreeter extends Greeter {
-         public void greet() { 
-            // super::great 等同于 x -> super.great(x)
-            Thread t = new Thread(super::greet);
+         public void process(String str) {
+            System.out.println(str);
+         }
+
+         public void thisTest(List<String> list) {
+            // this::实例方法
+            list.forEach(this::process); // 等价于 x -> this.process(x)
+         }
+
+         public void greet() {
+            // super::实例方法
+            Thread t = new Thread(super::greet); // 等同于 x -> super.great(x)
             t.start();
          }
       }
 
-      new ConcurrentGreeter().greet();
+      ConcurrentGreeter g = new ConcurrentGreeter();
+      g.greet();
+      g.thisTest(Arrays.asList("str1", "str2", "str3"));
    }   
 }

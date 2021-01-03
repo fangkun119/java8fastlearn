@@ -1,5 +1,6 @@
 import java.util.*;
 import javafx.application.*;
+import javafx.application.Application;
 import javafx.event.*;
 import javafx.scene.*;
 import javafx.scene.control.*;
@@ -18,11 +19,11 @@ import javafx.stage.*;
 
 public class OldStyle extends Application {
    public static void main(String[] args) {      
-      // Workder是老式方法所需要的类对象，封装了交给另一个线程执行的代码
+      // Workder类的实现代码可以替换成lambda表达式
       Worker w = new Worker();      
       new Thread(w).start();
 
-      // LenghtComparator是老式方法所需要的类对象，封装了用于排序的自定义比较器
+      // LenghtComparator的实现代码可以替换成lambda表达式
       class LengthComparator implements Comparator<String> {
          public int compare(String first, String second) {
             return Integer.compare(first.length(), second.length());
@@ -33,12 +34,13 @@ public class OldStyle extends Application {
       Arrays.sort(strings, new LengthComparator());
       System.out.println(Arrays.toString(strings));
 
-      launch(args);
+      Application.launch(args);
    }
 
    public void start(Stage stage) {
       Button button = new Button("Click me!");
-      // new EventHandler<ActionEvent>是老式方法所需要的类对象，封装了回调函数所要执行的代码
+
+      // EventHandler<ActionEvent>的实现代码可以替换成lambda表达式
       button.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                System.out.println("Thanks for clicking!");
