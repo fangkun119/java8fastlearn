@@ -1,6 +1,3 @@
-import java.nio.file.*;
-import java.util.*;
-
 /**
 * 变量作用域：
 * 1. Lambda表达式可以捕获闭合作用域的变量值，并且使用这些值
@@ -14,7 +11,7 @@ import java.util.*;
 * 5. Lambda表达式中使用this关键字时，会引用创建该表达式的方法的this参数（而不是执行该表达式的方法的this参数）
 */
 
-public class Application {
+public class ThisInLambda {
    public static void main(String[] args) {
 
       // Lambda表达式的方法体、与嵌套代码块有相同的作用域，适用同样的命名和屏蔽规则
@@ -22,10 +19,7 @@ public class Application {
       // Path first = Paths.get("/usr/bin");
       // Uncomment to see error "variable first is already defined"
       // in the lambda expression below
-
-      Comparator<String> comp = 
-         (first, second) -> Integer.compare(first.length(), second.length());
-      Application app = new Application();
+      ThisInLambda app = new ThisInLambda();
       app.doWork();
    }
 
@@ -34,6 +28,6 @@ public class Application {
 
       Runnable runner = () -> { System.out.println(this.toString()); };
       runner.run();
-      // Prints Application@... since this refers to an Application object
+      // Prints Application@... since this refers to an Application object, not runner Object
    }
 }

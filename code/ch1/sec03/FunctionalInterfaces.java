@@ -1,8 +1,7 @@
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
-import javafx.application.*;
-import javafx.event.*;
+
 import javafx.scene.*;
 import javafx.scene.control.*;
 import javafx.stage.*;
@@ -27,7 +26,7 @@ import javafx.stage.*;
 *   可选 @FunctionalInterface 注解来增强安全检查和JDoc文档生成
 */
 
-public class FunctionalInterfaces extends Application{
+public class FunctionalInterfaces extends ThisInLambda {
    public void start(Stage stage) {
       String[] strings = "Mary had a little lamb".split(" ");
 

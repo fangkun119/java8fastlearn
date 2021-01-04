@@ -18,8 +18,14 @@ import java.util.stream.*;
 */
 
 public class VariableScope {
-   public static void main(String[] args) {
-      repeatMessage("Hello", 100);
+   public static void main(String[] args) throws IOException {
+      Path notePath = FileSystems.getDefault().getPath("note");
+      Path usrBinPath = FileSystems.getDefault().getPath("/usr/bin/" );
+      // repeatMessage("Hello", 3);
+      // repeatMessage2("Hello", 3);
+      // countMatches(usrBinPath, "man");
+      countMatches2(usrBinPath, "man");
+      // collectMatches(notePath, "a").forEach(p -> System.out.println(p.getFileName()));
    }
 
    public static void repeatMessage(String text, int count) {
@@ -49,23 +55,29 @@ public class VariableScope {
       Path[] files = getDescendants(dir);
       // lambda表达式访问局部变量时，不可以修改这些变量
       int matches = 0;
-      for (Path p : files) 
-         new Thread(() -> { if (contains(p, word)) {
-                  // matches++; 
-                  // ERROR: Illegal to mutate matches
-               }}).start();
+      for (Path p : files) {
+         new Thread(() -> {
+            if (contains(p, word)) {
+               // matches++;
+               // ERROR: Illegal to mutate matches
+            }
+         }).start();
+      }
    }
 
    private static int matches;
    
    public static void countMatches2(Path dir, String word) {
       Path[] files = getDescendants(dir);
-      for (Path p : files) 
+      for (Path p : files) {
          // lambda表达式访问类成员变量、静态变量时，编译器不会阻止对这些变量的修改，但是要小心带来的线程安全问题
-         new Thread(() -> { if (contains(p, word)) {
-                  matches++; 
-                  // CAUTION: Legal to mutate matches, but not threadsafe      
-               }}).start();
+         new Thread(() -> {
+            if (contains(p, word)) {
+               VariableScope.matches++;  // CAUTION: Legal to mutate matches, but not threadsafe
+            }
+         }).start();
+      }
+      System.out.println(VariableScope.matches);
    }
 
    // Warning: Bad code ahead
@@ -73,11 +85,14 @@ public class VariableScope {
       Path[] files = getDescendants(dir);
       // 当局部变量是对象时，lambda表达式仅仅不能修改这些对象的引用，但是仍然可以修改对象的数据，要小心带来的安全问题
       List<Path> matches = new ArrayList<>();
-      for (Path p : files) 
-         new Thread(() -> { if (contains(p, word)) {
-                  matches.add(p);
-                  // CAUTION: Legal to mutate matches, but not threadsafe
-               }}).start();
+      for (Path p : files) {
+         System.out.println(p.getFileName());
+         new Thread(() -> {
+            if (contains(p, word)) {
+               matches.add(p); // CAUTION: Legal to mutate matches, but not threadsafe
+            }
+         }).start();
+      }
       return matches;
    }
 
