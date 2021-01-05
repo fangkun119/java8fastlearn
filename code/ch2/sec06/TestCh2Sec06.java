@@ -6,27 +6,42 @@ import java.util.stream.*;
 
 public class TestCh2Sec06 {
    public static void main(String[] args) throws IOException {
-      String contents = new String(Files.readAllBytes(
-            Paths.get("../alice.txt")), StandardCharsets.UTF_8);
-      List<String> wordList = Arrays.asList(contents.split("[\\P{L}]+"));
+      String contents = new String(Files.readAllBytes(Paths.get("code/ch2/alice.txt")), StandardCharsets.UTF_8);
+      List<String> strList = Arrays.asList(contents.split("[\\P{L}]+"));
 
-      Stream<String> words = wordList.stream();
+      // max
+      Optional<String> largest = strList.stream().max(String::compareToIgnoreCase);
+      if (largest.isPresent()) {
+         System.out.println("\n\t// largest: \n\t// " + largest.get());
+      }
+      // largest:
+      // zip
 
-      Optional<String> largest = words.max(String::compareToIgnoreCase);
-      if (largest.isPresent())
-         System.out.println("largest: " + largest.get());
+      // anyMatch
+      boolean aWordStartsWithQ = strList.stream().anyMatch(s -> s.startsWith("Q"));
+      System.out.println("\n\t// strList.stream().anyMatch(s -> s.startsWith(\"Q\"): \n\t// " + aWordStartsWithQ);
+      // strList.stream().anyMatch(s -> s.startsWith("Q"):
+      // true
 
-      words = wordList.stream();
-      boolean aWordStartsWithQ
-         = words.anyMatch(s -> s.startsWith("Q"));
-      System.out.println("aWordStartsWithQ: " + aWordStartsWithQ);
+      // findFirst
+      Optional<String> startsWithQ1 = strList.stream().filter(s -> s.startsWith("Q")).findFirst();
+      if (startsWithQ1.isPresent()) {
+         System.out.println("\n\t// startsWithQ1.findFirst: \n\t// " + startsWithQ1.get());
+      } else {
+         System.out.println("\n\t// No word starts with Q");
+      }
+      // startsWithQ1.findFirst:
+      // Quick
 
-      words = wordList.stream();
-      Optional<String> startsWithQ = words.parallel().filter(s -> s.startsWith("Q")).findAny();
-      if (startsWithQ.isPresent())
-         System.out.println("startsWithQ: " + startsWithQ.get());
-      else
-         System.out.println("No word starts with Q");
+      // findAny
+      Optional<String> startsWithQ2 = strList.stream().parallel().filter(s -> s.startsWith("Q")).findAny();
+      if (startsWithQ2.isPresent()) {
+         System.out.println("\n\t// startsWithQ2.findAny: \n\t// " + startsWithQ2.get());
+      } else {
+         System.out.println("\n\t// No word starts with Q");
+      }
+      // startsWithQ1:
+      // Queen
    }
 }
 
