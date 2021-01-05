@@ -4,7 +4,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class Test {
+public class TestCh2Sec05 {
    public static <T> void show(String title, Stream<T> stream) {
       final int SIZE = 10;
       List<T> firstElements = stream.limit(SIZE + 1).collect(Collectors.toList());

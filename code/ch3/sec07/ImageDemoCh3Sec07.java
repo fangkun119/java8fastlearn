@@ -7,7 +7,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.stage.*;
 
-public class ImageDemo extends Application {
+public class ImageDemoCh3Sec07 extends Application {
    public static Color[][] parallelTransform(Color[][] in, UnaryOperator<Color> f) {
       int n = Runtime.getRuntime().availableProcessors();
       int height = in.length;

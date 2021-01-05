@@ -4,7 +4,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class Test {
+public class TestCh2Sec09 {
    public static Stream<String> noVowels(String filename) throws IOException {
       String contents = new String(Files.readAllBytes(
             Paths.get(filename)), StandardCharsets.UTF_8);

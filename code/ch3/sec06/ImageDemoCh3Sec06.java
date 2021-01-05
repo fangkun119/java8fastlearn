@@ -37,7 +37,7 @@ class LatentImage {
    }
 }
 
-public class ImageDemo extends Application {
+public class ImageDemoCh3Sec06 extends Application {
    public void start(Stage stage) {
       Image image = new Image("eiffel-tower.jpg");
       Image finalImage = LatentImage.from(image)

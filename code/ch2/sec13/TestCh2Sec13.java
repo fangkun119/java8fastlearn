@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.*;
 import java.util.stream.*;
 import static java.util.stream.Collectors.*;
 
-public class Test {
+public class TestCh2Sec13 {
     public static void main(String[] args) throws IOException {
         String contents = new String(Files.readAllBytes(
                 Paths.get("../alice.txt")), StandardCharsets.UTF_8);

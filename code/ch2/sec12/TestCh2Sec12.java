@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-public class Test {
+public class TestCh2Sec12 {
    public static void show(String title, IntStream stream) {
       final int SIZE = 10;
       int[] firstElements = stream.limit(SIZE + 1).toArray();

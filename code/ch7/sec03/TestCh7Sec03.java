@@ -4,7 +4,7 @@ import javafx.application.*;
 import javafx.stage.*;
 import javax.script.*;
 
-public class Test extends Application {
+public class TestCh7Sec03 extends Application {
    private static ScriptEngineManager manager = new ScriptEngineManager();
    private static ScriptEngine engine = manager.getEngineByName("nashorn");
 

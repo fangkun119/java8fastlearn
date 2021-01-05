@@ -4,7 +4,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.*;
 
-public class Test {
+public class TestCh2Sec06 {
    public static void main(String[] args) throws IOException {
       String contents = new String(Files.readAllBytes(
             Paths.get("../alice.txt")), StandardCharsets.UTF_8);

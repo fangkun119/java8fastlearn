@@ -16,7 +16,7 @@ class Person {
    }
 }
 
-public class Test {
+public class TestCh2Sec10 {
    public static Stream<Person> people() {
       return Stream.of(
          new Person(1001, "Peter"),

@@ -21,7 +21,7 @@ class City {
    public int getPopulation() { return population; }
 }
 
-public class Test {
+public class TestCh2Sec11 {
    public static Stream<City> readCities(String filename) throws IOException {
       return Files.lines(Paths.get(filename)).map(l -> l.split(", ")).map(a -> new City(a[0], a[1], Integer.parseInt(a[2]))); 
    }
