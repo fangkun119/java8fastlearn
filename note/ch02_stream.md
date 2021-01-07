@@ -483,7 +483,7 @@
 >// Optional.empty
 >~~~
 >
->把`Optional`理解成大小为0或1的`Stream`，`Optional.flatMap`就可以与`Stream.flatMap`对照起来看
+> 把`Optional`理解成大小为0或1的`Stream`，`Optional.flatMap`就可以与`Stream.flatMap`对照起来看
 >
 >* `Stream.flatMap`把方法返回的`Stream`展开，进而使得两个方法可以组合起来串行调用 
 >* `Optional.flatMap`把方法返回的`Optional`展开 ，同样使得两个方法可以组合起来串行调用 
@@ -510,6 +510,577 @@
 >
 > `Optional.ofNullable(objT)`：objT不为null则封装objT，为null则返回Optional.empty()
 
-## 2.8 阶段3：聚合操作
+## 2.8 阶段3：聚合操作（`reduce`）
 
 > 使用元素顺序无关的二元操作符（如`相加`、`相乘`、`求最大值`、`求最小值`、`求并集`、`求交集`、……）将Stream中的元素组合成一个值
+
+### 2.8.1 以类型`Optional<T>`的返回
+
+> ```java
+> Optional<Integer> sum1 = Stream.of(intArray).reduce((x, y) -> x + y);
+> // Optional[366]
+> Optional<Integer> sum2 = Stream.<Integer>empty().reduce((x, y) -> x + y);
+> // Optional.empty
+> ```
+>
+> 其中的`(x, y) -> x + y`也可以替换成`Integer::sum`，满足`BiFunction<T, U, R>`接口的要求即可
+
+### 2.8.2 以类型`T`返回，需要提供初始值
+
+> ```java
+> Integer sum3 = Stream.of(intArray).reduce(0, (x, y) -> x + y);
+> // 366
+> Integer sum4 = Stream.<Integer>empty().reduce(0, (x, y) -> x + y);
+> // 0
+> ```
+
+### 2.8.3 提取属性并累加（`identity`，`accumulator`，`combiner`）
+
+> `identity`：初始值
+>
+> `accumulator`：`累加值`与某个`待提取属性值的item`进行累加
+>
+> `combiner`：两个`累加值`进行合并
+>
+> ```java
+> // U reduce(identity, accumulator, combiner)
+> int result = strList.stream().reduce(
+>         0, (s, w) -> s + w.length(), (s1, s2) -> s1 + s2);
+> // 122988
+> 
+> result = strList.parallelStream().reduce(
+>         0, (s, w) -> s + w.length(), (s1, s2) -> s1 + s2);
+> // 122988
+> ```
+
+## 2.9 阶段3：收集结果
+
+> 以各种方法收集流中的Item，而不是将它们聚合成一个值
+
+### 2.9.1 `iterator`
+
+> ```java
+> // iterator()
+> Iterator<Integer> iter = Stream.iterate(0, n -> n + 1).limit(5).iterator();
+> while (iter.hasNext()) {
+>    System.out.println(LOG_PREFIX + iter.next());
+> }
+> // 0
+> // 1
+> // 2
+> // 3
+> // 4
+> ```
+
+### 2.9.2 `toArray`
+
+> 需要使用`T[]::new`来解决泛型擦除对数组的影响，否则只能拿到`Object[]`类型的返回值
+>
+> ```java
+> // toArray(T[]:new)：解决泛型擦除的影响，可以返回T[]
+> Integer[] numbers3 
+>     = Stream.iterate(0, n -> n + 1).limit(5).toArray(Integer[]::new);
+> // [Ljava.lang.Integer;@52cc8049
+> ```
+
+### 2.9.3 `forEach`
+
+> ```java
+> noVowelsStream().limit(5).forEach(System.out::println);
+> // Prjct
+> // Gtnbrg
+> // s
+> // lc
+> ```
+
+### 2.9.4 collect
+
+#### (1) `collect(supplier, accumulator, combiner)`
+
+> `supplier`：根据目标类型创建对象的方法（解决泛型擦除问题）
+>
+> `accumulator`：将一个item天添加到`收纳器`中的方法
+>
+> `combiner`：将两个`收纳器`合并为一个的方法
+>
+> ~~~java
+> // collect(Supplier<R>，BiConsumer<R, ? super T>, BiConsumer<R, R>)
+> HashSet<String> noVowelHashSet
+>    = noVowelsStream().collect(HashSet::new, HashSet::add, HashSet::addAll);
+> // [, Pppr, ccssd, rsrc, tdy, srprsd, kss, rsrch, gssd, vwng]
+> ~~~
+
+#### (2) `collect(Collector)`
+
+> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collector_interface.jpg)
+>
+> `Collector`接口中已经包含了用于生成`supplier`、`accumulator`、`combiner`的方法。而工具类`Collectors`也提供了许多工厂方法来生成这些`Collector`。
+>
+> 例子如下：
+>
+> (1) 收集item到容器中，例如`Set`、`List`、……
+>
+> ```java
+> Set<String> noVowelSet = noVowelsStream().collect(Collectors.toSet());
+> // [, Pppr, ccssd, rsrc, tdy, srprsd, kss, rsrch, gssd, vwng]
+> 
+> TreeSet<String> noVowelTreeSet
+>    = noVowelsStream().collect(Collectors.toCollection(TreeSet::new));
+> // [, B, BFR, BG, BK, BRCH, BST, BSY, BT, BTS]
+> ```
+>
+> (2) 收集String并拼接在一起
+>
+> ~~~java
+> String result1 = noVowelsStream().limit(5).collect(Collectors.joining());
+> // PrjctGtnbrgslc
+> 
+> String result2 = noVowelsStream().limit(5).collect(Collectors.joining(", "));
+> // , Prjct, Gtnbrg, s, lc
+> ~~~
+>
+> (3) 对流的结果进行汇总
+>
+> ~~~java
+> IntSummaryStatistics summary
+>         = noVowelsStream().collect(Collectors.summarizingInt(String::length));
+> double averageWordLength = summary.getAverage();      
+> double maxWordLength = summary.getMax();
+> // 2.488593030900723
+> // 10.0
+> ~~~
+
+`Collectors`工具类提供的静态工厂方法如下
+
+> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collectors.jpg)
+
+## 2.10 阶段3：将结果收集到Map中
+
+> 将stream的结果收集到Map中，对于每一个item，需要解决如下问题：
+>
+> (1) 如何生成Map的key
+>
+> (2) 如何生成Map的value
+>
+> (3) 当两个item的key相同时、该如何处理
+
+### 2.10.1 `Collectors.toMap(keyMapper, valueMapper)`
+
+> 设置`keyMapper`和`valueMapper`可以指定如何得到Map的`key`和`value`
+>
+> (1) key和value都是item的一个方法的返回值
+>
+> ```java
+> Map<Integer, String> idToName = personStream().collect(Collectors.toMap(Person::getId, Person::getName));
+> // {1001=Peter, 1002=Paul, 1003=Mary}
+> ```
+>
+> (2) value是item本身
+>
+> ```java
+> Map<Integer, Person> idToPerson1 = personStream().collect(Collectors.toMap(Person::getId, Function.identity()));
+> // {1001=Person[id=1001,name=Peter], 1002=Person[id=1002,name=Paul], 1003=Person[id=1003,name=Mary]}
+> ```
+>
+> (3) 相同key时默认抛异常
+>
+> 上述两块代码没有指定key相同时的处理方法，当遇到具有相同key的item时，会抛出`IllegalStateException`
+
+### 2.10.2 `Collection.toMap(keyMapper, valueMapper, mergeFunction)`
+
+> 设置`mergeFunction`可以指定当遇到相同`key`时该如何处理
+>
+> 例子如下：
+>
+> (1) value替换，只保留一个（返回的Map的value类型是T）
+>
+> ```java
+> Map<String, String> languageNames = Stream.of(Locale.getAvailableLocales()).collect(
+>    Collectors.toMap(
+>       Locale::getDisplayLanguage, 
+>       Locale::getDisplayLanguage, 
+>       (existingValue, newValue) -> existingValue));
+> // {土耳其文=土耳其文, =, 意大利文=意大利文, 冰岛文=冰岛文, 印地文=印地文, ...}
+> ```
+>
+> (2) value去重存储在一个Set中（返回的Map的value类型是Set<T>）
+>
+> ```java
+> Map<String, Set<String>> countryLanguageSets = Stream.of(Locale.getAvailableLocales()).collect(
+>    Collectors.toMap(
+>       Locale::getDisplayCountry,
+>       l -> Collections.singleton(l.getDisplayLanguage()),
+>       (a, b) -> { // union of a and b
+>          Set<String> r = new HashSet<>(a); 
+>          r.addAll(b);
+>          return r; }));
+> // {新加坡=[中文, 英文], 澳大利亚=[英文], 印度尼西亚=[印度尼西亚文], 科威特=[阿拉伯文], 菲律宾=[英文], ..., =[, 土耳其文, 意大利文, 冰岛文, 印地文, ...]}
+> ```
+>
+> 备注：上面的功能也可以使用`2.11`的`grouping`来实现
+
+### 2.10.3 `Collection.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier)`
+
+> `mapSupplier`用来指定Map的具体实现
+>
+> 例如下面的例子、把默认的`HashMap`改成`TreeMap`
+>
+> ```java
+> // Collection.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier)
+> Map<Integer, Person> idToPerson2  = personStream().collect(
+>         Collectors.toMap(
+>                 Person::getId,
+>                 Function.identity(),
+>                 (existingValue, newValue) -> { throw new IllegalStateException(); },
+>                 TreeMap::new));
+> // {1001=Person[id=1001,name=Peter], 1002=Person[id=1002,name=Paul], 1003=Person[id=1003,name=Mary]}
+> ```
+
+## 2.11 阶段3：分组（groupingBy）和分片（partitioningBy）
+
+> 使用`groupingBy`可以对streaming内的数据进行分组，可通过参数指定
+>
+> * 如何分类（`classifier`）
+> * 如何收集分类结果（`downstream`）
+
+### 2.11.1 设置classifier以指定如何分类
+
+#### (1) `Collectors.groupingBy(classifier)`
+
+> 设置`classifier`为`Locale::getCountry`，而`downstream`使用了默认的`List::new`
+>
+> ```java
+> Map<String, List<Locale>> countryToLocales
+>         = localeStream().collect(Collectors.groupingBy(Locale::getCountry));
+> // [DE=[de_DE], PR=[es_PR], CH=[fr_CH, de_CH, it_CH], TW=[zh_TW], ...]
+> ```
+
+#### (2) `Collectors.partitioningBy(predicate)`
+
+> 当`classifier`的返回类型是`boolean`时，也可以使用`partioningBy`
+>
+> ```java
+> Map<Boolean, List<Locale>> englishAndOtherLocales
+>         = localeStream().collect(
+>                 Collectors.partitioningBy(l -> l.getLanguage().equals("en")));
+> display("English locales: ", englishAndOtherLocales.get(true));
+> // [en_US, en_SG, en_MT, en, en_PH, en_NZ, en_ZA, en_AU, en_IE, en_CA, en_IN, en_GB]
+> ```
+
+### 2.11.2 设置downstream指定如何收集分类结果
+
+> 不设置downstream时，默认值的收集器为Collector::toMap，即收集到Map中
+
+#### (1) 收集item到指定的数据结构中 
+
+##### `Collectors.toSet()`/`toList()`/`toMap()`/`toConcurrentMap()`
+
+> 把分组后每一组的item收集到Set/List/Map/ConcurrentMap中
+>
+> ```java
+> Map<String, Set<String>> countryToLanguages
+>         = localeStream().collect(
+>                 groupingBy(
+>                         Locale::getDisplayCountry,
+>                         mapping(Locale::getDisplayLanguage, toSet())
+>                 ));
+> // [泰国=[泰文], 巴西=[葡萄牙文], 塞尔维亚及黑山=[塞尔维亚文], 丹麦=[丹麦文], 塞尔维亚=[塞尔维亚文], ...]
+> ```
+>
+> 说明：`Collectors.toXXX()`是一组工厂方法，用来返回不同的类，这些类都符合`downstream`泛型参数的要求
+>
+> ```
+> Collector<? super T, A, D> downstream
+> ```
+>
+> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collectors_toXXX.jpg)
+
+#### (2) 把每个分组的统计值作为收集内容 
+
+##### `Collectors.counting()`
+
+> 每个分组的item数量作为收集内容
+>
+> ```
+> Map<String, Long> countryToLocaleCounts
+>         = localeStream().collect(
+>                 groupingBy(Locale::getCountry, counting()));
+> // [DE=1, PR=1, HK=1, TW=1, PT=1, ...]
+> ```
+
+##### `Collectors.summingInt()/summingLong()/summingDouble()`
+
+> 对每个分组下item的`指定计算值`进行`求和`，作为收集内容
+>
+> ```java
+> Map<String, Integer> stateToCityPopulation
+>         = cityStream().collect(
+>                 groupingBy(City::getState, summingInt(City::getPopulation)));
+> // [DE=71292, HI=345610, TX=13748465, MA=2403297, MD=869891, ...]
+> ```
+
+##### `Collectors.maxBy(Comparator)`/`minBy(Comparator)`
+
+> 对每个分组下item的`指定计算值`、按照`指定规则`比较的得到的`最大值`/`最小值`，作为收集内容
+>
+> ```java
+> Map<String, Set<String>> countryToLanguages
+>         = localeStream().collect(
+>                 groupingBy(
+>                         Locale::getDisplayCountry,
+>                         mapping(Locale::getDisplayLanguage, toSet())
+>                 ));
+> // [泰国=[泰文], 巴西=[葡萄牙文], 塞尔维亚及黑山=[塞尔维亚文], 丹麦=[丹麦文], 塞尔维亚=[塞尔维亚文], ...]
+> ```
+
+##### `Collectors.summarizingInt(ToIntFunction)`/`summarizingLong(ToLongFunction)`/`summarizingDouble(ToDoubleFunction)`
+
+> 对每个分组下item类型为`int`/`long`/`double`的`指定计算值`，计算出一组统计量（包括`count`，`sum`，`min`，`average`，`max`），作为收集内容
+>
+> ```java
+> Map<String, IntSummaryStatistics> stateToCityPopulationSummary
+>         = cityStream().collect(
+>                 groupingBy(
+>                         City::getState,
+>                         summarizingInt(City::getPopulation)
+>                 ));
+> System.out.println(stateToCityPopulationSummary.get("NY"));
+> // IntSummaryStatistics{count=14, sum=9733274, min=49722, average=695233.857143, max=8336697}
+> ```
+
+#### (3) 将分组内item的`指定计算值`用`指定方法`进行`收集`
+
+##### `Collectors.mapping`(`指定计算值的计算方法`，`收集方法`)
+
+> ```java
+> Map<String, Set<String>> countryToLanguages
+>         = localeStream().collect(
+>         groupingBy(
+>                 Locale::getDisplayCountry,
+>                 mapping(Locale::getDisplayLanguage, toSet())
+>         ));
+> // [泰国=[泰文], 巴西=[葡萄牙文], 塞尔维亚及黑山=[塞尔维亚文], 丹麦=[丹麦文], 塞尔维亚=[塞尔维亚文], ...]
+> 
+> Map<String, String> stateToCityNames1
+>         = cityStream().collect(
+>         groupingBy(
+>                 City::getState,
+>                 mapping(City::getName, joining(", "))
+>         ));
+> // Baltimore, Frederick, Rockville, Gaithersburg, Bowie
+> ```
+
+#### (4) 将分组内item的`指定计算值`用`指定方法`进行`聚合`
+
+##### `Collectors.reducing`(`指定计算值的计算方法`，`聚合方法`)
+
+> ```java
+> Map<String, String> stateToCityNames2
+>         = cityStream().collect(
+>                 groupingBy(
+>                     	// 指定值的计算方法为item的getState()方法
+>                         City::getState,
+>                     	// 聚合方法为','为分割符的字符串拼接
+>                         reducing(
+>                                 "",
+>                                 City::getName,
+>                                 (s, t) -> s.length() == 0 ? t : s + ", " + t
+>                         )
+>                 ));
+> System.out.println(stateToCityNames2.get("MD")); // by example of MD
+> // Baltimore, Frederick, Rockville, Gaithersburg, Bowie
+> ```
+
+## 2.12 原始类型流
+
+> 存储原始类型（`boolean`/`byte`/`char`/`short`/`int`/`long`/`float`/`double`）的流，它们不存储`Integer`之类的对象，而是直接存储原始类型，因此更加高效
+
+### 2.12.1 `IntStream`，`LongStream`，`DoubleStream`
+
+> * `IntStream`：可以用来存储`shart`、`char`、`byte`、`boolean`、`int`
+> * `LongStream`：可以用来存储`long`
+> * `DoubleStream`：可以用来存储`float`、`double`
+
+以下均以IntStream为例演示
+
+### 2.12.2 创建原始类型流
+
+#### (1) 从数组或可变参数列表创建
+
+> ```java
+> IntStream is1 = IntStream.of(1,2,3,4,5);
+> // [1, 2, 3, 4, 5]
+> 
+> IntStream is2 = Arrays.stream(new int[] {1,2,3,4,5}, 1, 3);
+> // [2, 3]
+> ```
+
+#### (2) 生成原始类型流
+
+> ```java
+> IntStream is1 = IntStream.generate(() -> (int)(Math.random() * 100));
+> // [42, 0, 98, 5, 81, ...]
+> 
+> IntStream is2 = IntStream.range(5, 9);
+> // [5, 6, 7, 8]
+> 
+> IntStream is3 = IntStream.rangeClosed(5, 9);
+> // [5, 6, 7, 8, 9]
+> 
+> IntStream is5 = new Random().ints();
+> // [-328531074, -978755995, -120081503, 559623620, -1461156362, ...]
+> ```
+
+#### (3) 使用`mapToXXX()`方法计算得到原始类型流
+
+> ```java
+> IntStream is4 = strList.mapToInt(String::length);
+> // [0, 7, 9, 1, 5, ...]
+> 
+> IntStream codes = someString
+>     .codePoints() // UTF-16编码单元组成的IntStream
+>     .mapToObj(c -> String.format("%X ", c)) 
+>     .collect(Collectors.joining());
+> // 1D546 20 69 73 20 74 68 65 20 73 65 74 20 6F 66 20 6F 63 74 6F 6E 69 6F 6E 73 2E
+> ```
+
+### 2.12.3 装箱，转换成普通的对象流
+
+> ```java
+> Stream<Integer> integers = IntStream.range(0, 100).boxed();
+> IntStream is5 = integers.mapToInt(Integer::intValue);
+> // [0, 1, 2, 3, 4, ...]
+> ```
+
+### 2.12.4 使用方法（与对象流的差别）
+
+> `原始类型流`与`对象流`的使用方法类似，但是有以下差别：
+>
+> * `toArray`方法会返回一个原始类型的数组
+> * 产生`Optional`结果的方法会返回一个`OpitonalInt`、`OptionalLong`或`OptionalDouble`类型，这些类型没有`get()`方法，而是用`getAsInt()`、`getAsLong()`、`getAsDouble()`来替代
+> * 拥有`sum`、`average()`、`max()`、`min()`方法，这些在对象流中不提供
+> * `summaryStatistics()`方法返回`IntSummaryStatistics`、`LongSummaryStatistics`、`DoubleSummaryStatistics`对象
+
+## 2.13 并行流及使用要领
+
+### 2.13.1 创建并行流
+
+#### `parallelStream()`或`parallel()`
+
+> `Collection.parallelStream()`可以创建一个并行流
+>
+> `Stream.parallel()`可以将一个串行流改变为并行流
+
+并行流创建后、整个stream处于并行状态，当阶段3的终止方法被执行时，所有被延迟执行的流操作都会并行执行
+
+### 2.13.2 保障计算正确
+
+#### (1) 流操作应当是无状态的
+
+> 流操作应当是无状态的，意味着他们以任意顺序执行都不影响最终的计算结果，计算结果都与串行流相同
+>
+> 下面是一个反例，它给多个线程共享了一个数组
+>
+> ```java
+> int[] shortWords = new int[10];
+> strList.stream().parallel().forEach(
+>     s -> {
+>         if (s.length() < 10) {
+>             shortWords[s.length()]++;
+>         }
+>     });
+> System.out.println(LOG_PREFIX + Arrays.toString(shortWords));
+> // 三次运行结果都不同、并且没有一次是对的
+> // [1, 1771, 4676, 6996, 5743, 3418, 2135, 1809, 823, 688]
+> // [1, 1765, 4546, 6634, 5494, 3357, 2129, 1794, 821, 688]
+> // [1, 1778, 4714, 6984, 5728, 3410, 2137, 1816, 823, 687]
+> ```
+>
+> 解决方法如下：
+
+#### (2) 给共享的数据增加原子保护
+
+> ```java
+> // Atomic integers 
+> AtomicInteger[] shortWordCounters = new AtomicInteger[10];
+> for (int i = 0; i < shortWordCounters.length; i++) {
+>     shortWordCounters[i] = new AtomicInteger();
+> }
+> strList.stream().forEach(
+>     s -> {
+>         if (s.length() < 10) {
+>             shortWordCounters[s.length()].getAndIncrement();
+>         }
+>     });
+> System.out.println(LOG_PREFIX + Arrays.toString(shortWordCounters));
+> // 三次运行结果：
+> // [1, 1826, 4999, 7637, 6166, 3589, 2203, 1867, 831, 697]
+> // [1, 1826, 4999, 7637, 6166, 3589, 2203, 1867, 831, 697]
+> // [1, 1826, 4999, 7637, 6166, 3589, 2203, 1867, 831, 697]
+> ```
+
+#### (3) 分组并行
+
+> ```java
+> System.out.println(
+>     LOG_PREFIX +
+>     strList.stream().parallel().filter(s -> s.length() < 10).collect(
+>        groupingBy(
+>           String::length,
+>           counting())));
+> // 三次运行结果：
+> // {0=1, 1=1826, 2=4999, 3=7637, 4=6166, 5=3589, 6=2203, 7=1867, 8=831, 9=697}
+> // {0=1, 1=1826, 2=4999, 3=7637, 4=6166, 5=3589, 6=2203, 7=1867, 8=831, 9=697}
+> // {0=1, 1=1826, 2=4999, 3=7637, 4=6166, 5=3589, 6=2203, 7=1867, 8=831, 9=697}
+> ```
+
+### 2.13.3 `有序`与`并行流性能`的关系：`parallel`,`unordered`
+
+有序流（例如`Stream.sorted`方法产生的流）
+
+> * 有时不会影响性能，例如执行`stream.map`操作
+> * 有时会影响性能，例如执行`stream.limit`操作
+
+对于影响性能的情况，可以通过`unordered`方法将其转换为无序流
+
+> 例如：
+>
+> ~~~java
+> Stream<T> sample = stream.parallel().unordered().limit(n);
+> ~~~
+
+另一个例子是`groupBy`
+
+> * group By用在`并行流`时，每个线程groupBy得到一个Map，然而合并这些Map的开销非常大
+>
+> * java8提供了`goupingByConcurrent`方法
+>     * 它把一个`ConcurrentMap`共享给多个线程来降低开销
+>     * 但代价是将不再保证数据有序
+>
+> 例子：
+>
+> ~~~java
+> Map<String, List<String>> result = cities.parallel().collect(
+> 	Collectors.groupingByConcurrent(City::getState); //无法按照流中的顺序收集
+> )
+> ~~~
+
+### 2.13.4 流不应当改变底层集合
+
+> 流的设计是`不修改流底层的集合`，下面是<span style="color:red">错误</span>的代码
+>
+> ~~~java
+> Stream<String> strStream = strList.stream();
+> strStream.forEach(s -> if (s.length() < 12) {
+>     strList.remove(s);
+> })
+> ~~~
+
+## 2.14 函数式接口
+
+> 上面的各个例子中都看到把`lambda表达式`作为函数参数传入的做法，理解这些代码，需要参考第一章的1.3小节，函数式接口
+
+### 2.14.1 Stream API用到的函数式接口
+
+> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_functional_interface.jpg)
+

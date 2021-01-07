@@ -1,5 +1,4 @@
 import java.io.*;
-import java.nio.file.*;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
@@ -17,7 +16,17 @@ class Person {
 }
 
 public class TestCh2Sec10 {
-   public static Stream<Person> people() {
+   // 工具函数，打印运行结果
+   private final static String PREFIX = "\t// ";
+   public static void display(String title, Object value) {
+      System.out.println("");
+      System.out.println(PREFIX + title);
+      System.out.println(PREFIX + value.toString());
+   }
+
+
+   // 测试数据
+   public static Stream<Person> personStream() {
       return Stream.of(
          new Person(1001, "Peter"),
          new Person(1002, "Paul"),
@@ -25,31 +34,31 @@ public class TestCh2Sec10 {
    } 
 
    public static void main(String[] args) throws IOException {
-      Map<Integer, String> idToName = people().collect(Collectors.toMap(Person::getId, Person::getName));
-      System.out.println("idToName: " + idToName);
+      // Collectors.toMap(keyMapper, valueMapper)
 
-      Map<Integer, Person> idToPerson = people().collect(Collectors.toMap(Person::getId, Function.identity()));
-      System.out.println("idToPerson: " + idToPerson.getClass().getName() + idToPerson);
+      // (1) key和value都是item的方法返回值
+      Map<Integer, String> idToName = personStream().collect(Collectors.toMap(Person::getId, Person::getName));
+      display("Collectors.toMap(Person::getId, Person::getName)", idToName);
+      // Collectors.toMap(Person::getId, Person::getName)
+      // {1001=Peter, 1002=Paul, 1003=Mary}
 
-      idToPerson = people().collect(
-         Collectors.toMap(
-            Person::getId,
-            Function.identity(),
-            (existingValue, newValue) -> { throw new IllegalStateException(); },
-            TreeMap::new));
+      // (2）value是item本身
+      Map<Integer, Person> idToPerson1 = personStream().collect(Collectors.toMap(Person::getId, Function.identity()));
+      display("Collectors.toMap(Person::getId, Function.identity())", idToPerson1);
+      // Collectors.toMap(Person::getId, Function.identity())
+      // {1001=Person[id=1001,name=Peter], 1002=Person[id=1002,name=Paul], 1003=Person[id=1003,name=Mary]}
 
-      System.out.println("idToPerson: " + idToPerson.getClass().getName() + idToPerson);
-
-      Stream<Locale> locales = Stream.of(Locale.getAvailableLocales());
-      Map<String, String> languageNames = locales.collect(
+      // Collection.toMap(keyMapper, valueMapper, mergeFunction)
+      Map<String, String> languageNames = Stream.of(Locale.getAvailableLocales()).collect(
          Collectors.toMap(
             Locale::getDisplayLanguage, 
             Locale::getDisplayLanguage, 
             (existingValue, newValue) -> existingValue));
-      System.out.println("languageNames: " + languageNames);
+      display("(existingValue, newValue) -> existingValue", languageNames);
+      // (existingValue, newValue) -> existingValue
+      // {土耳其文=土耳其文, =, 意大利文=意大利文, 冰岛文=冰岛文, 印地文=印地文, ...}
 
-      locales = Stream.of(Locale.getAvailableLocales());
-      Map<String, Set<String>> countryLanguageSets = locales.collect(
+      Map<String, Set<String>> countryLanguageSets = Stream.of(Locale.getAvailableLocales()).collect(
          Collectors.toMap(
             Locale::getDisplayCountry,
             l -> Collections.singleton(l.getDisplayLanguage()),
@@ -57,7 +66,20 @@ public class TestCh2Sec10 {
                Set<String> r = new HashSet<>(a); 
                r.addAll(b);
                return r; }));
-      System.out.println("countryLanguageSets: " + countryLanguageSets);
+      display("(a, b) -> {Set<String> r = new HashSet<>(a); r.addAll(b); return r;}", countryLanguageSets);
+      // (a, b) -> {Set<String> r = new HashSet<>(a); r.addAll(b); return r;}
+      // {新加坡=[中文, 英文], 澳大利亚=[英文], 印度尼西亚=[印度尼西亚文], 科威特=[阿拉伯文], 菲律宾=[英文], ..., =[, 土耳其文, 意大利文, 冰岛文, 印地文, ...]}
+
+      // Collection.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier)
+      Map<Integer, Person> idToPerson2  = personStream().collect(
+              Collectors.toMap(
+                      Person::getId,
+                      Function.identity(),
+                      (existingValue, newValue) -> { throw new IllegalStateException(); },
+                      TreeMap::new));
+      display("TreeMap::new", idToPerson2);
+      // TreeMap::new
+      // {1001=Person[id=1001,name=Peter], 1002=Person[id=1002,name=Paul], 1003=Person[id=1003,name=Mary]}
    }
 }
 
