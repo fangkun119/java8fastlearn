@@ -105,9 +105,9 @@ Lambda表达式是一段可以被传递的代码，例如
 
 把一个已有的方法，传给某个API：相当于一个lambda表达式的简写
 
-有三种形式：
+### 1.4.1 三种形式
 
-(1) `类::静态方法`
+#### (1) `类::静态方法`
 
 > ```java
 > Arrays.sort(strings, MethodReferences::cmp);
@@ -128,13 +128,13 @@ Lambda表达式是一段可以被传递的代码，例如
 > }
 > ```
 
-(3) `对象::静态方法`
+#### (2) `对象::静态方法`
 
 > ```java
 > button1.setOnAction(System.out::println); // str -> System.out.println(str)
 > ```
 
-(3) `类::实例方法`
+####  (3) `类::实例方法`
 
 > 会把第一个参数当做执行方法的对象
 >
@@ -144,16 +144,16 @@ Lambda表达式是一段可以被传递的代码，例如
 
 完整代码：[../code/ch1/sec04/MethodReferences.java](../code/ch1/sec04/MethodReferences.java)
 
-除此之外，还可通过`this`和`super`进行实例方法引用
+### 1.4.2 通过`this`和`super`进行实例方法引用
 
-(1) `this::实例方法`
+#### (1) `this::实例方法`
 
 > ```java
 > Thread t = new Thread(super::greet); // x -> super.great(x)
 > t.start();
 > ```
 
-(2) `super::实例方法`
+#### (2) `super::实例方法`
 
 > ```java
 > Thread t = new Thread(super::greet); // x -> super.great(x)
@@ -166,14 +166,14 @@ Lambda表达式是一段可以被传递的代码，例如
 
 可以使用`构造器引用`来创建对象，形式如下：
 
-(1) `Class::new`
+### 1.5.1 `Class::new`
 
 > ```java
 > List<String> labels = Arrays.asList("Ok", "Cancel", "Yes", "No", "Maybe");
 > Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button
 > ```
 
-(2) Class[]::new
+### 1.5.2 Class[]::new
 
 > ```java
 > Button[] buttons = stream.toArray(Button[]::new);
@@ -185,7 +185,9 @@ Lambda表达式是一段可以被传递的代码，例如
 > Button[] buttons = stream.toArray(n -> new Button[n]);
 > ```
 
-附录2：解决泛型擦除带来的类型丢失问题
+### 1.5.3 附录
+
+#### 附录1：解决泛型擦除带来的类型丢失问题
 
 > ```java
 > Stream<Button> stream = Arrays.asList("A", "B", "C").stream().map(Button::new);
@@ -204,7 +206,7 @@ Lambda表达式是一段可以被传递的代码，例如
 > Button[] buttons = stream.toArray(Button[]::new);
 > ~~~
 
-附录1：理解`Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button`
+#### 附录2：理解`Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button`
 
 > 以下是`Stream<T>.toArray`方法对参数的要求
 >
@@ -259,8 +261,12 @@ Lambda表达式是一段可以被传递的代码，例如
 
 ## 1.7 接口的默认方法
 
-(1) `默认接口方法`：下面用`default`修饰的方法`getName()`就是接口`Person`的默认方法
+### 1.7.1 接口的默认方法（`default`）
 
+(1) `默认接口方法`
+
+> 下面用`default`修饰的方法`getName()`就是接口`Person`的默认方法
+>
 > ```java
 > interface Person {
 >    long getId();
@@ -304,15 +310,15 @@ Lambda表达式是一段可以被传递的代码，例如
 > }
 > ```
 
-(4) 命名冲突：
+### 1.7.2 命名冲突
 
-`父类、接口`冲突：使用父类
+#### `父类、接口`冲突：使用父类
 
 > 父类、接口都提供了同一个方法（方法名、参数相同）的实现代码
 >
 > 使用父类的版本，而接口提供的版本被忽略
 
-`接口、接口`冲突：必须手动指定
+#### `接口、接口`冲突：必须手动指定
 
 > 接口A、B提供同一个方法（方法名、参数相同），其中一个是`默认方法`
 >
