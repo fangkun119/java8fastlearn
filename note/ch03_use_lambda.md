@@ -43,7 +43,7 @@
 >
 > 完整代码：[../code/ch3/sec01/Logging.java](../code/ch3/sec01/Logging.java)
 
-### 3.2.2 API：
+### 3.2.2 API 
 
 #### (1) `Supplier<T>`
 
@@ -440,8 +440,309 @@
 > lambda表达式抛出异常，传给调用它的代码，被捕获或者一层层向上传递，与普通代码的异常处理相同
 >
 > 如果代码中有多个lambda表达式要执行，其中之一抛出异常，则后面的lambda表达式不会在执行
-
-例子：[../code/ch3/sec08/ExceptionDemo2.java](../code/ch3/sec08/ExceptionDemo2.java)
+>
+> ~~~java
+> public static void doInOrder(Runnable first, Runnable second) {
+>     first.run();
+>     second.run();
+> }
+> public static void main() {
+>     try {
+>         doInOrder(
+>             () -> System.out.println(args[0]),   // 会抛异常
+>             () -> System.out.println("won't be executed")
+>         );
+>     } catch (Exception e) {
+>         System.out.println("exception: " + e);
+>     }
+>     // 输出： exception: java.lang.ArrayIndexOutOfBoundsException: 0
+> }
+> ~~~
 
 ### 3.8.2 异步执行场景
+
+#### (1) 跨线程传递异常处理代码
+
+> 上面的代码，可以交给一个异步运行的API（形如下面的`doInOrderAsync`方法），但有个问题
+>
+> * `try`块的代码交给了`新创建的线程B`来异步运行
+> * `catch`块的代码仍然留在了`主线程A`
+> * 当异常抛出时，抛在了线程B（线程B发现异常后退出），而捕捉线程的代码留在线程A什么也捕捉不到
+
+解决方法是：把处理线程的逻辑、也用lambda表达式传给API
+
+下面是例子，完整代码见：[../code/ch3/sec08/ExceptionDemo.java](../code/ch3/sec08/ExceptionDemo.java)
+
+##### 例子1：通过lambda传入异常处理函数
+
+> 异步API
+>
+> ```java
+> public static void doInOrderAsync1(
+>         Runnable first, Runnable second, Consumer<Throwable> handler) {
+>     Thread t = new Thread() {
+>         public void run() {
+>             try {
+>                 first.run();
+>                 second.run();
+>             } catch (Throwable t) {
+>                 handler.accept(t); // 调用异常处理函数
+>             }
+>         }
+>     };
+>     t.start();
+> }
+> ```
+>
+> 使用异步API的代码
+>
+> ```java
+> doInOrderAsync1(
+>     ()  -> System.out.println(args[0]),          // 会抛异常
+>     ()  -> System.out.println("won't be executed") ,
+>     (e) -> System.out.println("exception: " + e) // Exception Handler
+> );
+> // 输出：exception: java.lang.ArrayIndexOutOfBoundsException: 0
+> ```
+
+##### 例子2：通过lambda传入异常处理函数，并且两个任务函数间有数据依赖
+
+> 异步API
+>
+> ```java
+> public static <T> void doInOrderAsync2(
+>         Supplier<T> first, Consumer<T> second, Consumer<Throwable> handler) {
+>     Thread t = new Thread() {
+>         public void run() {
+>             try {
+>                 // first的输出作为second的输入
+>                 T firstRet = first.get(); 
+>                 second.accept(firstRet); 
+>             } catch (Throwable e) {
+>                 handler.accept(e); // 调用异常处理函数
+>             }
+>         }
+>     };
+>     t.start();
+> }
+> ```
+>
+> 使用异步API的代码
+>
+> ```java
+> doInOrderAsync2(
+>     ()  -> args[0],                              // 会抛异常
+>     (r) -> System.out.println(r) ,
+>     (e) -> System.out.println("exception: " + e) // Exception Handler
+> );
+> // 输出：exception: java.lang.ArrayIndexOutOfBoundsException: 0
+> ```
+
+##### 例子3：任务处理函数既收集返回结果、又收集遇到的异常，并返回给主线程
+
+> 异步API
+>
+> ```java
+> public static <T> void doInOrderAsync3 (
+>         Supplier<T> first, BiConsumer<T, Throwable> second) {
+>     Thread t = new Thread() {
+>         public void run() {
+>             T firstRet = null;
+>             Throwable exception = null;
+>             try {
+>                 firstRet = first.get();
+>             } catch (Throwable e) {
+>                 exception = e;
+>             } finally {
+>                 second.accept(firstRet, exception);
+>             }
+>         }
+>     };
+>     t.start();
+> }
+> ```
+>
+> 使用异步API的代码
+>
+> ```java
+> doInOrderAsync3(
+>         () -> args[0],                           // 会抛异常
+>         (result, exception) -> System.out.println(
+>                 String.format("result %s; exception: %s", result, exception))
+> );
+> // 输出：result null; exception: java.lang.ArrayIndexOutOfBoundsException: 0
+> ```
+
+#### (2) 处理`函数式接口`的异常抛出声明与lambda表达式不一致的问题
+
+问题：
+
+> Java 8 提供的`Supplier<T>`，`Consumer<T>`等，抽象方法声明中都没有`throws Exception`
+>
+> 如果
+>
+> * API使用的`函数式接口`没有`throws Exception`的函数
+> * 而传入的lambda表达式，如果抛出的异常是`checked exception`，作为参数的`函数式接口`必须有`throws Exception`方法声明
+>
+> 那么就造成了不一致，无法通过编译检查
+
+解决方法1：考虑让API使用`带有throws Exception的函数式接口`（类库提供的、或自己写的），
+
+> 例如`Supplier<T>`可以替换为`Callable<T>`
+>
+> ```java
+> package java.util.function;
+> 
+> @FunctionalInterface
+> public interface Supplier<T> {
+>     T get(); // 没有异常抛出声明
+> }
+> ```
+>
+> ~~~java
+> package java.util.concurrent;
+> 
+> @FunctionalInterface
+> public interface Callable<V> {
+>     V call() throws Exception;  // 有异常抛出声明
+> }
+> ~~~
+
+解决方法2：更多情况下API不可以更改，解决方法是做一层封装、将`checked exception`转换为`unchecked exception`
+
+> ```java
+> // 将会抛出checked exception的Callable<T>
+> // 转换为不会抛checked exception的Supplier<T>，它只会抛un-checked exception
+> public static <T> Supplier<T> unchecked(Callable<T> f) {
+>     return () -> {
+>         try {
+>             // 调用传入的会抛checked Exception的函数
+>             return f.call();
+>         } catch (Exception e) {
+>             // 将checked exception转换成un-checked exception后抛出
+>             throw new RuntimeException(e);
+>         } catch (Throwable t) {
+>             throw t;
+>         }
+>     };
+> }
+> ```
+>
+> ```java
+> // 不能兼容API的lambda表达式
+> Callable<String> withCheckedException = () -> new String(Files.readAllBytes(
+>         Paths.get("/etc/not_existed")), StandardCharsets.UTF_8);
+> 
+> // 用上面的unchecked方法将其转换成兼容API的lambda
+> Consumer<Throwable> unCheckedExceptionHandler = e -> System.out.println(e);
+> api(unchecked(withCheckedException), unCheckedExceptionHandler);
+> // 输出：java.lang.RuntimeException: java.nio.file.NoSuchFileException: /etc/not_existed
+> ```
+
+完整代码：[../code/ch3/sec08/ExceptionDemo2.java](../code/ch3/sec08/ExceptionDemo2.java)
+
+## 3.9 使用lambda表达式时用到的泛型问题
+
+### 3.9.1 解决泛型擦除问题
+
+> 泛型擦除问题：形如`Collection<T>.toArray()`之类的方法只能返回`Object[]`
+>
+> * 因为泛型擦除，形如`Collection<T>`的泛型类 ，存入容器类型为`T`的对象，其类型在运行期就丢失了，只能把它们当成`Object`类型。调用其API，也只能返回`Object`或者`Object[]`类型的数据 。
+>     * 对于返回`Object`的情况，虽然运行期类型`T`被擦除了，但是编译期仍然知道该`Object`的真实类型，可以通过类型转换的方法将其转回`T`
+>     * 对于返回`Object[]`的情况，Java不容许将它转型为`T[]`
+> * `Parent[]`不容许转型为`Children1[]`，是因为`Parent[]`内除了可以存储`Children`对象、还有可能存储`Parent`对象或者`Children2`对象
+
+#### (1) java 6的解决办法
+
+> ` T[] Collection<T>.toArray(T[] a)`
+>
+> 传入`T[]`作为参数，在方法内部使用反射，得到类型`T`来创建`T[]`，例如
+>
+> ~~~
+> String[] strArray = strList.toArray(new String[0]);
+> ~~~
+
+#### (2) 使用lambda的解决办法
+
+> `T[] Collection<T>.toArray(T[]::new)`
+>
+> 用lambda表达式传入数组的构造函数给toArray方法，例如
+>
+> ~~~java
+> String[] strArray = strList.toArray(String[]::new);
+> ~~~
+
+### 3.9.2 协变、逆变问题
+
+问题：编写一个泛型函数接口、其参数该使用`协变`还是`逆变`？
+
+协变（covariant）
+
+> 例如`void readFrom(List<? Extends Preson> list)`，这个方法会从`list`中`以Person为类型`读出出入，`list`的泛型参数必须是Person的子类，例如
+>
+> ~~~java
+> readFrom(new ArrayList<Employee>());
+> readFrom(new ArrayList<Student>());
+> ~~~
+
+逆变（contravariant）
+
+> 例如`void writeTo(List<? Super Person> list)`，这个方法会向`list`中`以Person为类型`来写入数据，`list`的泛型参数必须是`Person`的基类、否则list装不下，例如
+>
+> ~~~java
+> writeTo(new ArrayList<Person>);
+> writeTo(new ArrayList<Object>);
+> ~~~
+
+函数接口使用协变逆变：参数总是指定为`逆变`、返回值指定为`协变`
+
+> 参数使用了逆变`? super T`，返回值使用协变`? extends R`
+>
+> 参考Stream用到的泛型函数接口Function和Consumer
+>
+> ~~~java
+> public interface Stream<T> extends BaseStream<T, Stream<T>> {
+>     // 返回值”? extends R”：后面的代码可以以类型R读取该返回值，返回的都是R或者它的子类
+> 	// 参数“? super T”：对处理T的函数的要求，如果它能处理任何基类，那么它也能处理T
+>     <R> Stream<R> map(Function<? super T, ? extends R> mapper);
+>     
+>     // 参数"? super T"：
+>     // * 对处理T的函数的要求，如果它能处理任何基类，那么它也能处理T
+>     // * 例如可以传Consumer<Object>，这个函数连Object都可以处理，那么它一定可以处理类型T
+>     void forEach(Consumer<? super T> action);
+>     ...
+> }
+> ~~~
+>
+> 下面是一个实例
+>
+> (1) 未使用泛型通配符
+>
+> ~~~java
+> public static <T> void doInOrderAsync(
+> 		Supplier<T> first, Consumer<T> second, Consumer<Throwable> handler
+> 	)
+> ~~~
+>
+> (2) 改为使用泛型通配符
+>
+> ~~~java
+> public static <T> void doInOrderAsync(
+> 	Supplier<? extends T> first, // 输出使用协变，输出的对象当做类型T来给下游
+>     Consumer<? super T> second,  // 输入使用逆变，这个函数要能够处理输入类型为T的对象
+>     Consumer<? super Throwable> handler // 输入使用逆变，这个函数要能处理类型为Throwable的异常
+> )
+> ~~~
+
+不能使用泛型通配符的例外情况：输入输出类型相依赖、逆变协变相互抵消
+
+> 例如
+>
+> ~~~
+> T reduce(T identity, BinaryOperator<T> accumulator)
+> ~~~
+
+
+
+
 
