@@ -376,3 +376,65 @@
 
 ## 6.3 并行数组操作
 
+(1) `Arrays.parallelSort(T[])`
+
+> 以多线程的方式对数组进行排序，还可以传入Comparator，可以指定对数组的哪一段进行排序
+>
+> ```java
+> Arrays.parallelSort(strArray);
+> // [, , , , ...... , youth, youth, youth, zigzag, zip]
+> ```
+
+(2) `Arrays.parallelSetAll(T[], UnaryOperator)`
+
+> 用传入的lambda表达式，根据数组下标计算出一个值填充到数组中
+>
+> ```java
+> int[] values = new int[20];
+> Arrays.parallelSetAll(values, i -> i % 10);
+> System.out.println(Arrays.toString(values));
+> // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+> ```
+
+(3) `Arrays.parallelPrefix(T[], BinaryOperator)`
+
+> 用数组从下标0到当前下标i的累积运算（由传入的lambda表达式指定）计算出来的值填充数组
+>
+> ```java
+> // 用数组从下标0到当前下标i的累积运算（由传入的lambda表达式指定）计算出来的值填充数组
+> Arrays.parallelSetAll(values, i -> i + 1);
+> System.out.println(Arrays.toString(values));
+> // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+> Arrays.parallelPrefix(values, (x, y) -> x * y);
+> System.out.println(Arrays.toString(values));
+> // [1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600, 1932053504, 1278945280, 2004310016, 2004189184, -288522240, -898433024, 109641728, -2102132736]
+> ```
+
+## 6.4 `CompletableFuture<T>`
+
+### 6.4.1 Java 6中的`Future`
+
+> 只能通过调用`get()`方法一直阻塞直至结果可用，不能做到完全异步
+
+### 6.4.2 `CompletableFuture`
+
+> 可以设置一个回调函数给`CompletableFuture`，然后进行其他操作。当CompletableFuture可用时，会调用回调函数，做到完全异步
+>
+> ```java
+> class Util {
+>     ...
+>     
+>     // action: 执行的慢速阻塞操作
+>     // until：判断操作完成的条件，如果完成则返回，否则重试
+>     public static <T> CompletableFuture<T> repeat(Supplier<T> action,  Predicate<T> until) {
+>         return CompletableFuture.supplyAsync(action).thenComposeAsync((T t) -> {
+>             return until.test(t) ? CompletableFuture.completedFuture(t) : repeat(action, until);
+>         });
+>     }
+> }
+> ```
+>
+> 
+
+
+
