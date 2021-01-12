@@ -9,5 +9,6 @@ public class SetViews {
       words = map.keySet(1L);
       words.add("Java");
       System.out.println(map.get("Java"));
+      // 输出: 1
    }
 }

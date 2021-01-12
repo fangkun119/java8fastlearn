@@ -198,6 +198,181 @@
 >         // 解锁
 >         lock.unlockWrite(stamp);
 >     }
-> }
 > ```
+
+## 6.2 ConcurrentHashMap改进
+
+> ConcurrentHashMap线程安全、同时容许多个线程并发更新哈希表的不同部分，且不会相互阻塞
+
+### 6.2.0 设计更新
+
+> * `mappingCount()方法`：返回long解决超大型哈希量导致size()方法32位整形数溢出的问题
+>
+> * `块状hash拉链设计`：对于相同的hash值、可以以`log(n)`的时间复杂度搜索拉链中的数据块（需要实现Comparable接口），用来处理分布不均的情况
+
+### 6.2.1 更新值
+
+> 完整代码：[../code/ch6/sec02/UpdatingValues.java](../code/ch6/sec02/UpdatingValues.java)
+
+#### (1) 不能保证原子性的方法组合：`put`和`get`
+
+> ```java
+> // 虽然ConcurrentHashMap保证了get和put不会因为并发操作而破坏HashMap的数据结构
+> // 但是get和put并没有放到一个原子操作中
+> Long oldValue = concurrentHashMap.get(word);
+> Long newValue = oldValue == null ? 1 : oldValue + 1;    
+> concurrentHashMap.put(word, newValue); // Error—might not replace oldValue
+> ```
+
+#### (2) 使用基于乐观锁的方法`replace`来更新
+
+> ```java
+> do {
+>    oldValue = concurrentHashMap.get(word);
+>    newValue = oldValue == null ? 1 : oldValue + 1;
+> } while (!concurrentHashMap.replace(word, oldValue, newValue));
+> ```
+
+#### (3) 用`LongAdder`的原子属性来确保线程安全
+
+> ```java
+> ConcurrentHashMap<String, LongAdder> map2 = new ConcurrentHashMap<>();
+> map2.putIfAbsent(word, new LongAdder()); // 保证已经存在了一个LongAdder
+> map2.get(word).increment();              // 调用LongAdder的原子自增
+> // 上面两行代码可以合并成一个
+> map2.putIfAbsent(word, new LongAdder()).increment();
+> ```
+
+#### (4) 传入lambda表达式并原子执行：`compute`
+
+> ```java
+> // lambda表达式封装操作的内容、及value初始值设置以及更新
+> // compute、computeIfAbsent, computeIfPresent方法保证该操作被原子执行
+> concurrentHashMap.compute(word, (k, v) -> v == null ? 1 : v + 1);
+> map2.computeIfAbsent(word, k -> new LongAdder()).increment();
+> map2.computeIfPresent(word, (k,v) -> v).increment();
+> ```
+
+#### (5) 传入lambda表达式并原子执行：merge
+
+> ```java
+> // 与compute类似，但是lambda表达式只需要提供更新操作，而value初始值可以通过另一个参数传入
+> concurrentHashMap.merge(
+>     word,  // key
+>     1L,    // value缺失时的hash初始值
+>     (existingValue, newValue2) -> existingValue + newValue2 // value更新操作
+> );
+> concurrentHashMap.merge(word, 1L, Long::sum);
+> ```
+
+### 6.2.2 批量数据操作
+
+#### 6.2.2.1 介绍
+
+批量数据操作
+
+> * 可以去其他线程的操作同时执行
+> * 不需要将Map冻结成一个快照
+> * 在此期间读线程读出来的value应当被看做是一个近似值（即有可能已被修改、也有可能未被修改的值）
+
+三类批量数据操作
+
+> * `search`：对所有满足条件的key或value应用一个函数
+> * `reduce`：应用accumulator函数将所有key和value组合起来
+> * `forEach`：对所有key和（或）value应用一个函数
+
+每个操作都有三个版本，共12种组合
+
+> |            | search        | reduce        | forEach      |
+> | ---------- | ------------- | ------------- | ------------ |
+> | key        | searchKeys    | reduceKeys    | forEachKey   |
+> | value      | searchValues  | reduceValues  | forEachValue |
+> | key, value | search        | reduce        | forEach      |
+> | entries    | searchEntries | reduceEntries | forEachEntry |
+
+并行阈值：
+
+> 只有当Map的`元素数量`超过`并行阈值`时，批量操作才会以并行的方式执行
+
+例子
+
+> ```java
+> // 容量超过1就并行，保证始终以并行方式运行
+> long threshold = 1; 
+> 
+> // search
+> String result = word2cntConcurrentHashmap.search(threshold, (k, v) -> v > 1000 ? k : null);
+> 		// the
+> 
+> // forEach
+> word2cntConcurrentHashmap.forEach(
+>         threshold,
+>         (k, v) -> System.out.print(k + " -> " + v + ", "));
+> 		// govern -> 1, numerous -> 1, England -> 1, ......
+> 
+> word2cntConcurrentHashmap.forEach(
+>         threshold,                       // key
+>         (k, v) -> k + " -> " + v + ", ", // Transformer
+>         System.out::print);              // Consumer
+> 		// govern -> 1, numerous -> 1, England -> 1, ......
+> 
+> word2cntConcurrentHashmap.forEach(threshold,
+>         (k, v) -> v > 300 ? k + " -> " + v : null, // Filter and transformer
+>         System.out::println); // The nulls are not passed to the consumer
+>         // I -> 545
+>         // a -> 672
+>         // ...
+> 
+> // reduceKeys
+> Integer maxlength = word2cntConcurrentHashmap.reduceKeys(threshold,
+>         String::length, // Transformer
+>         Integer::max);  // Accumulator
+> 		// maxlength: 16
+> 
+> // reduceValues
+> Long sum = word2cntConcurrentHashmap.reduceValues(threshold, Long::sum);
+> 		// sum: 30420
+> 
+> 
+> Long count = word2cntConcurrentHashmap.reduceValues(threshold,
+>         v -> v > 300 ? 1L : null,
+>         Long::sum);
+> System.out.println("count: " + count);
+> // count: 13
+> 
+> long sum2 = word2cntConcurrentHashmap.reduceValuesToLong(threshold,
+>         Long::longValue, // Transformer to primitive type
+>         0, // Default value for empty concurrentHashMap
+>         Long::sum); // Primitive type accumulator
+> 		// sum2: 30420
+> ```
+>
+> 完整代码：[../code/ch6/sec02/BulkOperations.java](../code/ch6/sec02/BulkOperations.java)
+
+### 6.2.3 Set视图
+
+> java没有提供ConcurrentHashSet这样的类，java 8用以下两种方式提供支持
+
+#### (1) 用静态方法`ConcurrentHashMap.<K>newKeySet()`新建一个支持并发的`Set<T>`
+
+> 其实这个Set的底层是用`ConcurrentHashMap<K, Boolean>`实现的，但是提供的方法是`Set<K>`的方法
+>
+> ```java
+> Set<String> words = ConcurrentHashMap.<String>newKeySet();
+> ```
+
+#### (2) 用方法`keySet(V)`将已有的`ConcurrentHashMap<K,V>`映射成`Set<K>`并共享底层数据
+
+> * 当从`Set<K>`中删除一个Key时，对应的`<K, V>`也会从`ConcurrentHashMap<K,V>`中删除
+> * 向这个`Set<K>`中添加元素时，会以调用`keySet(V defaultValue)`时传入的默认值来向底层的`ConcurrentHashMap<K,V>`中添加数据
+>
+> ```java
+> ConcurrentHashMap<String, Long> map = new ConcurrentHashMap<>();
+> words = map.keySet(1L); //默认值 1
+> words.add("Java");
+> System.out.println(map.get("Java"));
+> // 输出: 1
+> ```
+
+## 6.3 并行数组操作
 
