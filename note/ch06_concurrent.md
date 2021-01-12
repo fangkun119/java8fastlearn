@@ -459,10 +459,12 @@
 >                 (String url) -> Util.getPage(url)
 >         );
 >         // 抓取完成时会调用thenApply提取页面中的链接，该操作封装在CompletableFuture中返回
->         CompletableFuture<List<String>> links = f.thenApply(
->                 c -> Util.matches(c, hrefPattern)
->         );
+>         // * thenApply在CompletableFuture f 完成之后执行，
+>         // * 它不会阻塞，而是返回另一个CompletableFuture links
+>         CompletableFuture<List<String>> links 
+>             = f.thenApply(c -> Util.matches(c, hrefPattern));
 >         // 提取链接操作完成时，会调用thenAccept设置的回调函数
+>         // * CompletableFuture links的返回值会成为最终结果
 >         links.thenAccept(System.out::println);
 > 
 >         // 所有以Async结尾的方法都有两种形式：
@@ -472,8 +474,114 @@
 >         ForkJoinPool.commonPool().awaitQuiescence(10, TimeUnit.SECONDS);
 >         System.out.println("exiting");
 >     }
-> }
+> }	
+> ```
+>
+> 使用`CompletableFuture`，只需要指定希望完成什么、以及按照什么顺序完成就可以，当然它们不会立即发生，重要的是所有代码都在同一个地方 
+
+### 6.4.3 如何创建CompeletableFuture流水线
+
+#### 步骤1：创建CompletableFuture对象
+
+> 需要在操作之间传递数据时：使用`CompletableFuture.supplyAsync(Supplier<U>)`
+>
+> ~~~java
+> CompletableFuture<FirstItemType> firstFuture
+>     = CompletableFuture.supplyAsync(() -> someBlockingOperation(parameters));
+> ~~~
+>
+> 不需要在操作之间传递数据时：使用`CompletableFuture.runAsync(Runnable)`
+>
+> ~~~java
+> CompletableFuture<Void> firstFuture 
+>     = CompletableFuture.runAsync(() -> someRunnable());
+> ~~~
+
+#### 步骤2：为流水线上添加Action
+
+> 在同一个线程中操作：使用`.thenApply(Function<? super T,? extends U>)`
+>
+> ~~~java
+> CompletableFuture<SecondItemType> secondFuture
+>     = firstFuture.thenApply((firstItem) -> someOpsReturnSecondItem(firstItem));
+> ~~~
+>
+> 在另一个线程中操作：使用`.thenApplyAsync(Function<? super T,? extends U>)`
+>
+> ~~~java
+> CompletableFuture<SecondItemType> secondFuture 
+>     = firstFuture.thenApplyAsync((firstItem) -> someOpsReturnSecondItem(firstItem));
+> ~~~
+>
+> 此步骤可反复进行
+
+####  步骤3：指定最终步骤
+
+> 不需要存储处理结果时：使用`thenAccept(Consumer<? super T>)`
+>
+> ~~~java
+> CompletableFuture<Void> finalFuture
+>     = secondFuture.thenAccept((secondItem) -> someOperations(seoncdItem));
+> ~~~
+>
+> 需要存储处理结果时：使用`thenApply(Function<? super T,? extends U>)`
+>
+> ~~~java
+> CompletableFuture<FinalItemType> finalFuture
+>     = secondFuture.thenAccept((secondItem) -> someOpsReturnFinalItem(seoncdItem));
+> ~~~
+
+#### 例子：将上面三个步骤串行起来
+
+> ~~~java
+> CompletableFuture<Void> finalFuture = CompletableFuture
+>     .supplyAsync(() -> someBlockingOperation(parameters))
+>     .thenApply((firstItem) -> someOpsReturnSecondItem(firstItem))
+>     .thenAccept((secondItem) -> someOperations(seoncdItem));
+> ~~~
+
+###  6.4.4  编写异步操作
+
+####  (1) 为流水线添加Action的API
+
+> 向一个`CompletableFuture<T>`添加Action，有如下方法
+>
+> | 在当前线程执行 | 在 另一个 线程执行 | 参数                      | 描述                                       |
+> | -------------- | ------------------ | ------------------------- | ------------------------------------------ |
+> | thenApply      | thenApplyAsync     | T -> U                    | 为结果提供一个 函数                        |
+> | thenCompose    | thenComposeAsync   | T -> CompletableFuture<U> | 对结果调用一个函数，并执行返回的Future对象 |
+> | handle         | handleAsync        | (T,  Throwable) -> U      | 处理结果或者错误                           |
+> | thenAccept     | thanAcceptAsync    | T -> void                 | 同thenApply但结果为void类型                |
+> | whenComplete   | whenCompleteAsync  | (T,  Throwable) -> void   | 同handle类似，但结果为void类型             |
+> | thenRun        | thenRunAsync       | Runnable                  | 执行返回void的Runnable对象                 |
+
+`handle` / `handleAsync`
+
+> 关于上面的handle，它不仅可以接收计算结果，还可以获取`CompletableFuture`执行时抛出的异常。如果 不使用handle方法、异常要到在`CompletableFuture`上执行`.get()`操作时才能拿到
+
+`thenCompose` / `thenComposeAsync`
+
+> 其实也是将`CompletableFuture.supplyAsync(action)`返回的CompletableFuture与`(T t) -> CompletableFuture.completedFuture(t)`返回的CompletableFuture结合在了一起
+>
+> ```java
+> CompletableFuture<T> future 
+>    = CompletableFuture
+>     .supplyAsync(action)
+>     .thenComposeAsync((T t) -> CompletableFuture.completedFuture(t));
 > ```
 
+#### (2) 组合多个CompletableFuture
 
+> 将`CompletableFuture<T>`和`CompletableFuture<U>`组合起来，有如下方法
+>
+> | 在当前线程执行 | 在另一个线程执行    | 参数                                    | 描述                                                 |
+> | -------------- | ------------------- | --------------------------------------- | ---------------------------------------------------- |
+> | thenCombine    | thenCombineAsync    | CompletableFuture<U>, (T, U) -> V       | 执行 两个对象 ，将结果按照指定的函数组合 起来        |
+> | thenAcceptBoth | thenAcceptBothAsync | CompletableFuture<U>, (T, U) -> void    | 同thenCombine类似，但 结果为void类型                 |
+> | runAfterBoth   | runAfterBothAsync   | CompletableFuture<?>, Runnable          | 在两个对象完成后，执行Runnable对象                   |
+> | applyToEither  | applyToEitherAsync  | CompletableFuture<T>, T -> V            | 当其中 一个 对象的结果可用时，将结果传递给指定的函数 |
+> | acceptEither   | acceptEitherAsync   | CompletableFuture<T>,  T -> void        | 同applyToEither类似，但是结果为void类型              |
+> | runAfterEither | runAfterEitherAsync | CompletableFuture<?>, Runnable          | 在其中一个对象结束后执行Runnable对象                 |
+> | static allOf   |                     | CompletableFuture<?>, ... （一组对象）  | 在所有Future对象结束后结束，并返回void结果           |
+> | static anyOf   |                     | CompletableFuture<?>, ... （一组 对象） | 在任何一个Future对象结束后结束，并返回boid结果       |
 
