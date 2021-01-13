@@ -1,29 +1,57 @@
-import java.io.*;
-import java.nio.file.*;
-import java.time.*;
-import java.time.temporal.*;
-import java.util.*;
-import java.util.stream.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.stream.Stream;
 
 public class StreamsOfDirectoryEntries {
-   public static void main(String[] args) throws IOException {
-      Path pathToDirectory = Paths.get("/home/cay");
-      try (Stream<Path> entries = Files.list(pathToDirectory)) {
-         entries.filter(p -> !p.getFileName().toString().startsWith(".")).forEach(System.out::println);
-      }
+    public static void main(String[] args) throws IOException {
+        // Files.list(Path)
+        System.out.println("non-hidden directories and files in current directory");
+        try (Stream<Path> entries = Files.list(Paths.get("./"))) {
+             entries
+            .filter(p -> !p.getFileName().toString().startsWith("."))
+            .limit(5)
+            .forEach(System.out::println);
+        }
+        // non-hidden directories and files in current directory
+        // ./note
+        // ./out
+        // ./code
+        // ./README.md
 
-      System.out.println("Hidden directories");
-      try (Stream<Path> entries = Files.walk(pathToDirectory)) {
-         entries.filter(p -> p.getFileName().toString().startsWith(".")).forEach(System.out::println);
-      }
+        // Files.walk(Path)
+        System.out.println("hidden directories and files including those in all sub-directories");
+        try (Stream<Path> entries = Files.walk(Paths.get("./"))) {
+             entries
+            .filter(p -> p.getFileName().toString().startsWith("."))
+            .limit(5)
+            .forEach(System.out::println);
+        }
+        // hidden directories and files including those in all sub-directories
+        // .
+        // ./.DS_Store
+        // ./code/ch7/sec01/.Rhistory
+        // ./.gitignore
+        // ./.git
 
-      System.out.println("Recent files");
-      int depth = 5;
-      Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
-      try (Stream<Path> entries = Files.find(pathToDirectory, depth,
-            (path, attrs) -> attrs.creationTime().toInstant().compareTo(oneMonthAgo) >= 0)) {
-         entries.forEach(System.out::println);
-      }
-   }   
+
+        // Files.find(Path, maxDepth, FileVisitOption...)
+        System.out.println("recent files in directories with directory-max-depth 5");
+        int depth = 5;
+        Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+        try (Stream<Path> entries = Files.find(Paths.get("./"), depth,
+                (path, attrs) -> attrs.creationTime().toInstant().compareTo(oneMonthAgo) >= 0)) {
+            entries.limit(5).forEach(System.out::println);
+        }
+        // recent files in directories with directory-max-depth 5
+        // .
+        // ./note
+        // ./note/ch09_java7_features.md
+        // ./note/ch02_stream.md
+        // ./note/ch07_js_engine_noshorn.md
+    }
 }
 

@@ -2,7 +2,7 @@
 
 [TOC]
 
-## 8.1 字符串拼接
+## 8.1 类似python的字符串拼接
 
 字符串拼接更加方便，字符串可以来自`数组`或者`Iterable<? extends CharSequence>`对象 
 
@@ -358,13 +358,171 @@ display(TestData.personArray, 5);
 
 ## 8.5 使用文件
 
-完整代码：[../code/ch8/sec05/Base64Demo.java](../code/ch8/sec05/Base64Demo.java)
-
-完整代码：[../code/ch8/sec05/StreamsOfDirectoryEntries.java](../code/ch8/sec05/StreamsOfDirectoryEntries.java)
+### 8.5.1 读取文件行的流：`Files.lines`方法
 
 完整代码：[../code/ch8/sec05/StreamsOfLines.java](../code/ch8/sec05/StreamsOfLines.java)
 
+#### (1) 按行读取文件：`Files.lines(Path)`
 
+> ```java
+> // 调用Files.lines(Path)的到文件行的流(Stream)
+> // 把Stream放在java 7的try-with-resource语句中，可以保证其close()方法在离开try块时被调用，从而不需要手动调用
+> // 可以通过onClose方法，设置在close()被调用时执行的操作
+> try (Stream<String> filteredLines = Files
+>                 .lines(Paths.get(BASE_DIR,"StreamsOfLines.java"))
+>                 .onClose(() -> System.out.println("Closing"))
+>                 .filter(s -> s.contains("password"))) {
+>     Optional<String> passwordEntry = filteredLines.findFirst();
+>     passwordEntry.ifPresent(System.out::println);
+> }
+> // 输出
+> // Optional<String> passwordEntry = lines.filter(s -> s.contains("password")).findFirst();
+> // Closing
+> ```
+
+#### (2) 按行读取其他数据：`BufferedReader.lines()`
+
+> ```java
+> URL url = new URL("http://horstmann.com");
+> try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+>     // BufferedReader.lines()：从BufferedReader生成Stream
+>     Stream<String> lines = reader.lines();
+>     Optional<String> imgEntry = lines
+>             .filter(s -> s.contains("<img "))
+>             .findFirst();
+>     imgEntry.ifPresent(System.out::println);
+> }
+> ```
+
+#### (3) 抛出的异常：IOException变为UncheckedIOException
+
+> 读取文件出错时原本会抛出IOException，但是流操作的方法并没有声明会抛出任何异常（导致IOException无法抛出），因此该异常会被转化为`UncheckedIOException`抛出（unchecked exception不受方法声明影响）
+>
+> ```java
+> try (BufferedReader reader = new BufferedReader(
+>         // 构造一个Reader，会在读取文件到第10行时抛出IOException
+>         new Reader() {
+>             private int count;
+>             public void close() {}
+>             public int read(char[] cbuf, int off, int len) throws IOException {
+>                 if (++count == 10) {
+>                     throw new IOException("Simulated exception");
+>                 }
+>                 return len;
+>             }
+>         }
+> )) {
+>     Stream<String> lines = reader.lines();
+>     Optional<String> imgEntry = lines.filter(s -> s.contains("<img ")).findFirst();
+>     imgEntry.ifPresent(System.out::println);
+> }
+> // 输出：流操作已经将IOException转化为UncheckedIOException抛出了
+> // Exception in thread "main" java.io.UncheckedIOException: java.io.IOException: Simulated exception
+> // at java.base/java.io.BufferedReader$1.
+> // ...
+> ```
+
+### 8.5.2 遍历目录项的流（`Stream<Path>`）
+
+完整代码：[../code/ch8/sec05/StreamsOfDirectoryEntries.java](../code/ch8/sec05/StreamsOfDirectoryEntries.java)
+
+#### (1) `Files.list(Path)`
+
+> ```java
+> // Files.list(Path)
+> System.out.println("non-hidden directories and files in current directory");
+> try (Stream<Path> entries = Files.list(Paths.get("./"))) {
+>      entries
+>     .filter(p -> !p.getFileName().toString().startsWith("."))
+>     .limit(5)
+>     .forEach(System.out::println);
+> }
+> // non-hidden directories and files in current directory
+> // ./note
+> // ./out
+> // ./code
+> // ./README.md
+> ```
+
+#### (2) ` Files.walk(Path)`
+
+> ```java
+> System.out.println("hidden directories and files including those in all sub-directories");
+> try (Stream<Path> entries = Files.walk(Paths.get("./"))) {
+>      entries
+>     .filter(p -> p.getFileName().toString().startsWith("."))
+>     .limit(5)
+>     .forEach(System.out::println);
+> }
+> // hidden directories and files including those in all sub-directories
+> // .
+> // ./.DS_Store
+> // ./code/ch7/sec01/.Rhistory
+> // ./.gitignore
+> // ./.git
+> ```
+
+#### (3) `Files.find(Path, maxDepth, FileVisitOption...)`
+
+> ```java
+> // Files.find(Path, maxDepth, FileVisitOption...)
+> System.out.println("recent files in directories with directory-max-depth 5");
+> int depth = 5;
+> Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+> try (Stream<Path> entries = Files.find(Paths.get("./"), depth,
+>         (path, attrs) -> attrs.creationTime().toInstant().compareTo(oneMonthAgo) >= 0)) {
+>     entries.limit(5).forEach(System.out::println);
+> }
+> // recent files in directories with directory-max-depth 5
+> // .
+> // ./note
+> // ./note/ch09_java7_features.md
+> // ./note/ch02_stream.md
+> // ./note/ch07_js_engine_noshorn.md
+> ```
+
+### 8.5.3 Base64
+
+> Base64编码将字节序列编码成一个（更长的）可打印的ASCII序列，在二进制数据传输、“基本“的HTTP认证等都被使用过。JDK之前提供的支持非常弱、直到Java 8才提供了标准编码器和解码器。
+>
+> Base64有如下要求
+>
+> * 每6 bit信息使用一些字符来编码，字符选择范围包括：`A-Za-z0-9`以及`+`和`-`
+> * 通常编码后的字符串没有换行符，但是电子邮件使用的MIME标准要求每76个字符要使用一个"\r\n"换行符
+
+#### (1) 字符串编码/解码
+
+> ```java
+> // 编码
+> Base64.Encoder encoder = Base64.getEncoder();
+> String encoded = encoder.encodeToString(someString.getBytes(StandardCharsets.UTF_8));
+> System.out.println(encoded);
+> 
+> // 解码
+> String decoded = new String(Base64.getDecoder().decode(encoded.getBytes()));
+> System.out.println(decoded);
+> ```
+
+#### (2) 自动编码/解码的流
+
+> ```java
+> // 编码流：
+> Path originalPath = Paths.get("code/ch8/sec05/", "Base64Demo.java");
+> Path encodedPath  = Paths.get("code/ch8/sec05/", "Base64Demo.java.base64");
+> encoder = Base64.getMimeEncoder();
+> try (OutputStream output = Files.newOutputStream(encodedPath)) {
+>     Files.copy(originalPath, encoder.wrap(output));
+> }
+> 
+> // 解码流：
+> Path decodedPath = Paths.get("code/ch8/sec05/", "Base64Demo.java.decoded");
+> Base64.Decoder decoder = Base64.getMimeDecoder();
+> try (InputStream input = Files.newInputStream(encodedPath)) {
+>     Files.copy(decoder.wrap(input), decodedPath, StandardCopyOption.REPLACE_EXISTING);
+> }
+> ```
+
+完整代码：[../code/ch8/sec05/Base64Demo.java](../code/ch8/sec05/Base64Demo.java)
 
 ##  8.6 注解
 
