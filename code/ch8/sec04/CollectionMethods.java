@@ -10,8 +10,6 @@ import java.util.*;
 * Iterator    : forEachRemaining (将迭代器剩余元素都传递给一个函数)
 * BitSet      : stream (生成集合中的所有元素，返回一个由int组成的stream）
 */ 
-
-
 public class CollectionMethods {
    public static void main(String[] args) {
       List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
