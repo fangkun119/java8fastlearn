@@ -257,9 +257,104 @@
 
 完整代码：[../code/ch8/sec04/ComparatorsTest.java](../code/ch8/sec04/ComparatorsTest.java)
 
+#### (1) 基于字段的比较器：`Comparator.comparing(keyExtractor)`
 
+> ```java
+> // 基于字段比较
+> // Comparator.comparing(Function<? super T, ? extends U> keyExtractor)
+> Arrays.sort(
+>         TestData.personArray,
+>         Comparator.comparing(Person::getName)
+> );
+> display(TestData.personArray, 5);
+> // [Abraham Lincoln,Andrew Jackson,Andrew Johnson,Barack Hussein Obama,Benjamin Harrison...]
+> ```
 
+#### (2) 多级比较器：`Comparator.thenComparing(keyExtractor)`
 
+> ```
+> // 多级比较
+> // Comparator.comparing(Function<? super T, ? extends U> keyExtractor)
+> // Comparator.thenComparing(Function<? super T, ? extends U> keyExtractor)
+> Arrays.sort(
+>         TestData.personArray,
+>         Comparator
+>             .comparing(Person::getLastName)
+>             .thenComparing(Person::getFirstName)
+> );
+> display(TestData.personArray, 5);
+> // [John Adams,John Quincy Adams,James Buchanan,George Herbert Walker Bush,George Walker Bush...]
+> ```
+
+#### (3) 基于字段及排序规则来比较：`Comparator.comparing(keyExtractor,keyComparator)`
+
+> ```java
+> // 基于字段及排序规则来比较
+> // Comparator.comparing(
+> //            Function<? super T, ? extends U> keyExtractor,
+> //            Comparator<? super U> keyComparator)
+> Arrays.sort(
+>         TestData.personArray,
+>         Comparator.comparing(
+>             Person::getName,
+>             (s, t) -> Integer.compare(s.length(), t.length())
+>         )
+> );
+> display(TestData.personArray, 5);
+> // [John Adams,John Tyler,Gerald Ford,James Monroe,James Madison...]
+> ```
+
+#### (4) 避免int/long/double的装箱拆箱的比较器：`Comparator.comparingInt/Long/Double(keyExtractor)`
+
+> ```java
+> // 用来避免int/long/double的装箱拆箱的比较器
+> // Comparator.comparingInt(ToIntFunction<? super T> keyExtractor)
+> // Comparator.comparingLong(ToIntFunction<? super T> keyExtractor)
+> // Comparator.comparingDouble(ToIntFunction<? super T> keyExtractor)
+> Arrays.sort(
+>         TestData.personArray,
+>         Comparator.comparingInt(p -> p.getName().length())
+> );
+> display(TestData.personArray, 5);
+> // [John Adams,John Tyler,Gerald Ford,James Monroe,James Madison...]
+> ```
+
+#### (5) 兼容null值的比较器：`Comparator.nullsFirst(comparator)`
+
+> ```java
+> // 兼容null值的比较，让null值排在最前或最后，而不是抛异常
+> // Comparator.nullsFirst(Comparator<? super T> comparator)
+> // nullsLast(Comparator<? super T> comparator)
+> //
+> // Comparator.自然顺序
+> // Comparator.naturalOrder()
+> Arrays.sort(
+>         TestData.personArray,
+>         Comparator.comparing(
+>                 Person::getMiddleName,
+>                 nullsFirst(naturalOrder())
+>         )
+> );
+> display(TestData.personArray, 5);
+> // [John Adams,John Tyler,Gerald Ford,James Monroe,James Madison...]
+> ```
+
+#### (6) 倒序比较器：`Comparator.reversed()`
+
+```java
+// 倒序排序
+// Comparator.reversed()
+Arrays.sort(
+        TestData.personArray,
+        Comparator.comparing(
+            Person::getMiddleName,
+            // Comparator<T>.natrualOrder().reversed()等价于Comparator<T>.reverseOrder()
+            nullsFirst(Comparator.<String>naturalOrder().reversed())
+        )
+);
+display(TestData.personArray, 5);
+// [John Adams,John Tyler,Gerald Ford,James Monroe,James Madison...]
+```
 
 ## 8.5 使用文件
 
