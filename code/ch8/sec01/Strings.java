@@ -13,9 +13,11 @@ public class Strings {
       // 拼接可变参数列表中的字符串
       String joined = String.join("/", "usr", "local", "bin"); // "usr/local/bin"
       System.out.println(joined);
+      // 输出：usr/local/bin
 
       // 拼接Set<String>中的字符串
       String ids = String.join(", ", ZoneId.getAvailableZoneIds());
       System.out.println(ids);
+      // 输出：Asia/Aden, America/Cuiaba, Etc/GMT+9, ......
    }
 }
