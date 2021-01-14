@@ -526,12 +526,122 @@ display(TestData.personArray, 5);
 
 ##  8.6 注解
 
-完整代码：[../code/ch8/sec06/TestCase.java](../code/ch8/sec06/TestCase.java)
-完整代码：[../code/ch8/sec06/TestCaseDemo.java](../code/ch8/sec06/TestCaseDemo.java)
-完整代码：[../code/ch8/sec06/TestCaseProcessor.java](../code/ch8/sec06/TestCaseProcessor.java)
-完整代码：[../code/ch8/sec06/TestCases.java](../code/ch8/sec06/TestCases.java)
+> Java 8 对注解的改进主要体现在三方面
+>
+> * 可重复的注解：容许同一个注解应用多次
+> * 可用于类型的注解
+> * 反射增强：Java 8能够得到方法参数的名称，进而可以简化标注在参数上的注解
 
+### 8.6.1 可重复的注解
 
+#### (1) 使用可重复的注解
+
+> 在Java8之前，同一个注解不能重复使用，因此不得不将它们包装到一个父注解中，代码比较丑陋，例如
+>
+> ~~~java
+> @Entity
+> @PrimaryKeyJoinColumns({
+> 	@PrimaryKeyJoinColumn(name = "ID"),
+> 	@PrimaryKeyJoinColumn(name = "REGION")
+> })
+> public class Item { ... }
+> ~~~
+>
+> Java 8容许注解被注解重复使用，一个框架可以会提供如下的注解，对于使用人员来说会更加方便
+>
+> ~~~java
+> @Entity
+> @PrimaryKeyJoinColumn(name = "ID"),
+> @PrimaryKeyJoinColumn(name = "REGION")
+> public class Item { ... }
+> ~~~
+
+#### (2)  编写可重复的注解
+
+> 要将注解`标注为@Repeatable`，并提供一个`“容器注解”`，这样
+>
+> * 注解处理器调用`public <T extends Anntation> T getAnnotation(Class<T> annotationClass)`时，就可以通过返回的"容器注解"、获得封装在里面的多个可重复注解（Java 8为了兼容历史版本）
+> * Java 8同时提供了另一个方法`getAnnotationByType`，可以返回一个注解数组
+
+#### (3) 例子
+
+> 注解
+>
+> * 可重复注解：[../code/ch8/sec06/TestCase.java](../code/ch8/sec06/TestCase.java)
+>
+> * “容器”注解：[../code/ch8/sec06/TestCases.java](../code/ch8/sec06/TestCases.java)
+>
+> 注解处理器：[../code/ch8/sec06/TestCaseProcessor.java](../code/ch8/sec06/TestCaseProcessor.java)
+>
+> 使用注解的代码：[../code/ch8/sec06/TestCaseDemo.java](../code/ch8/sec06/TestCaseDemo.java)
+
+### 8.6.2 可用于类型的注解
+
+#### (1) 可用于类型的注解
+
+Java 8之前的注解都是`声明注解`，只能被标注在一个`声明`（用于定义某个新名称的代码）上
+
+> 例如下面代码的`Person`和`people`
+>
+> ~~~java
+> @Entithy
+> public class Person {
+>     ...
+> }
+> ~~~
+>
+> ~~~java
+> @SuppressWarnings("unchecked")
+> List<Person> people = query.getResultList();
+> ~~~
+
+Java 8新增了`类型注解`，可以标注在任何`类型`上，包括
+
+> * 泛型类型参数：`List<@NotNull String>`，`Comparator.<@NotNullString> reverseOrder()`
+> * 数组、多维数组：
+>     * `String[] @NotNull [] words`：`words[i][j]`不为null
+>     * `String @NotNull [][] words`：`words`不为null
+>     * ``String[] @NotNull [] words`：`words[i]`不为null
+> * 父类和接口：`class Image implements @Rectangular Shape`
+> * 调用构造函数：`new @Path String("/usr/bin")`
+> * 强制类型转换和`instanceof`检查：`(@Path String) input`，`if (input instanceof @Path String)`，这些注解只用于外部工具，不会对类型转换或者instanceof的检查带来任何影响
+> * 定义抛出的异常：`public Person read() throws @Localized IOException`
+> * 通配符和类型绑定：`List<@ReadOnly ? Extends Person>`，`List<? Extends @ReadOnly> Person`
+> * 方法和构造函数引用：`@Immutable Person::getName`
+
+当然`类型注解`不能用于`类型`以外的地方，例如class或者import等，也不能用在其他注解上
+
+> ~~~java
+> @NotNull String.class //非法，不能用来标注class
+> import java.long.@NotNull String; //非法，不能用来标注import
+> ~~~
+
+使用例子之一：`Checker Framework`
+
+> 官网及文档：
+>
+> * [http://types.cs.washington.edu/checker-framework](http://types.cs.washington.edu/checker-framework)
+> * [http://types.cs.washington.edu/checker-framework/tutorial](http://types.cs.washington.edu/checker-framework/tutorial)
+>
+> 它会为程序中所有的`非局部变量`（如方法返回值、成员变量等）都隐式地标注了`@NotNull`注解，这些变量不容许出现null值，除非在代码中显示地标注`@Nullable`
+
+### 8.6.3 方法参数反射
+
+#### (1) 方法参数反射
+
+> Java 8 提供的类 `java.lang.reflect.Parameter`使注解处理器可以获得参数的名称（但是需要以`javac -parameters SourceFile.java`的方式来编译
+
+在没有方法参数反射之前，需要通过注解来提供参数名称，例如
+
+> ~~~java
+> Person getEmployee(@PathParam("dept") Long dept, @QueryParam("id") Long id)
+> ~~~
+
+使用方法参数反射之后，代码可以简化为
+
+> ~~~java
+> Person getEmployee(@PathParam Long dept, @QueryParam Long id)
+> ~~~
 
 ## 8.7 其他 
 

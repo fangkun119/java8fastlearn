@@ -14,6 +14,7 @@ public class TestCaseProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         for (TypeElement t : annotations) {
+            // 获取并遍历可重复注解
             for (Element e : roundEnv.getElementsAnnotatedWith(t)) {
                 System.out.println(e + " " + t);
             }
