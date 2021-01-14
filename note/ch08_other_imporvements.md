@@ -556,7 +556,7 @@ display(TestData.personArray, 5);
 > public class Item { ... }
 > ~~~
 
-#### (2)  编写可重复的注解
+#### (2) 编写可重复的注解
 
 > 要将注解`标注为@Repeatable`，并提供一个`“容器注解”`，这样
 >
@@ -576,8 +576,6 @@ display(TestData.personArray, 5);
 > 使用注解的代码：[../code/ch8/sec06/TestCaseDemo.java](../code/ch8/sec06/TestCaseDemo.java)
 
 ### 8.6.2 可用于类型的注解
-
-#### (1) 可用于类型的注解
 
 Java 8之前的注解都是`声明注解`，只能被标注在一个`声明`（用于定义某个新名称的代码）上
 
@@ -627,8 +625,6 @@ Java 8新增了`类型注解`，可以标注在任何`类型`上，包括
 
 ### 8.6.3 方法参数反射
 
-#### (1) 方法参数反射
-
 > Java 8 提供的类 `java.lang.reflect.Parameter`使注解处理器可以获得参数的名称（但是需要以`javac -parameters SourceFile.java`的方式来编译
 
 在没有方法参数反射之前，需要通过注解来提供参数名称，例如
@@ -643,7 +639,150 @@ Java 8新增了`类型注解`，可以标注在任何`类型`上，包括
 > Person getEmployee(@PathParam Long dept, @QueryParam Long id)
 > ~~~
 
-## 8.7 其他 
+## 8.7 其他改进 
 
-完整代码：[../code/ch8/sec07/Locales.java](../code/ch8/sec07/Locales.java) 
+### 8.7.1 Null检查：`Objects.isNull`和`Objects.nonNull`
+
+新增量两个静态方法：`Objects.isNull`和`Objects.nonNull`，用在Stream中进行过滤，例如：
+
+> 检查一个流是否有null值
+>
+> ~~~java
+> stream.anyMatch(Ojbects::isNull)
+> ~~~
+>
+> 从一个流中获取所有非null对象
+>
+> ~~~java
+> stream.filter(Object::nonNull)
+> ~~~
+
+### 8.7.2 延迟消息
+
+#### (1) `java.util.Logger`对延迟操作的支持
+
+方法：`log`、`logp`、`severe`、`warning`、`info`、`config`、`fine`、`finer`、`finest`
+
+传入lambda表达式
+
+> * 表达式的计算操作内容被延迟到日志打印时才执行
+> * 如果不满足日志级别要求不用打印日志，这些操作就不需要执行
+
+例如
+
+> 在java7的时候，下面的操作不论是否打印日志都会执行
+>
+> ~~~java
+> logger.finest("x: " + x + ", y:" + y);
+> ~~~
+>
+> 用java8，可以通过lambda来传入要执行的操作，并延迟按需执行
+>
+> ~~~java
+> logger.finest(() -> "x: " + x + ", y:" + y);
+> ~~~
+
+#### (2) `Object.requireNonNull`的lambda版本
+
+> ~~~java
+> this.directions = Objects.requireNotNull(inputParameter,
+> 		() -> "inputParameter for " + this.goal + "must not be null"
+> 	)
+> ~~~
+>
+> * 当`inputParameter`不为null时，赋给`this.directions`
+>
+> * 当`inputParameter`为null时，执行lambda表达式中的延迟操作、生成一个字符串，填充在NullPointerException中抛出
+
+### 8.7.3 正则表达式
+
+#### (1) 用`组名`提取`命名捕获组`匹配的内容
+
+Java 7引入了`命名捕获组`，例如下面的`(?<city>)`和`(?<state>)`就包裹了两个命名捕获组的正则表达式
+
+> ~~~java
+> （?<city>[\p{L} ]+),\s*(?<state>[A-Z]{2})
+> ~~~
+
+Java 8中， `Matcher`类的`start`、`end`和`group`方法可以使用`命名捕获组`的`名称`来获得匹配的字符串
+
+> ~~~java
+> Matcher matcher = pattern.matcher(input);
+> if (matcher.matches()) {
+>     String city = matcher.group("city"); //"city"是写在正则表达式中的命名组名称
+>     ...
+> }
+> ~~~
+
+#### (2) 用`正则表达式`生成`Stream<String>`
+
+> 正则表达式用作分隔符
+>
+> ~~~java
+> Stream<String> strStream = Pattern.compile("[\\P{L}]+").splitAsStream(inputStr);
+> ~~~
+>
+> 过滤stream，值保留能匹配正则表达式的item
+>
+> ~~~java
+> Stream<String> afterFilter = word.filter(Pattern.compile("[A-Z]{2,}")).asPredicate());
+> ~~~
+
+### 8.7.4 语言环境
+
+#### (1) 语言环境
+
+> 不同地域的人习惯于不同的语言环境（`语种`、`日期格式`等），一套语言环境由以下5部分组成（根据IETF BCP47)：
+>
+> * 语言：由2-3个小写字母指定，例如`en`，`de`
+> * 脚本：由4个字母组成，例如`Latn`（拉丁文），`Cuyrl`（西里尔文），`Hant`（繁体中文）
+> * 国家：由2-3个大写字母组成，例如`US`，`CH`
+> * 变量（可选）：目前有些变量被语言代码替换
+> * 扩展（可选）：用于描述日历、数字等本地偏好，例如`u-nu-thai`表示使用泰国数字
+> * 其他扩展：以`x-`开头，例如`x-java`
+>
+> 这些会体现在Locale的方法参数中
+
+#### (2) 语言范围查找
+
+> ```java
+> // List中包含两个LanguageRange，分别表示"说德语"，以及"在瑞士"
+> List<Locale.LanguageRange> priorityRangeList
+>         = Stream.of("de", "*-CH")
+>                 .map(Locale.LanguageRange::new)
+>                 .collect(Collectors.toList());
+> 
+> // 用两个LanguageRange进行筛选，返回所有匹配的Local
+> List<Locale> matches
+>         = Locale.filter(
+>                 priorityRangeList,
+>                 Arrays.asList(Locale.getAvailableLocales()));
+> System.out.println(matches);
+> // 输出
+> // [de_IT, de_CH, de_BE, de, de_LU, de_DE, de_LI, de_AT, pt_CH, gsw_CH, fr_CH, rm_CH, it_CH, wae_CH, en_CH]
+> 
+> // 用两个LanguageRange进行筛选，返回匹配度最高的Local
+> Locale bestMatch = Locale.lookup(
+>         priorityRangeList,
+>         Arrays.asList(Locale.getAvailableLocales()));
+> System.out.println(bestMatch);
+> // 输出
+> // de
+> ```
+>
+> 代码链接：[../code/ch8/sec07/Locales.java](../code/ch8/sec07/Locales.java) 
+
+### 8.7.5 JDBC
+
+> (1) `java.sql.Date`、`Time`、`Timestamp`增加支持`LocalDate`、`LocalTime`和`LocalDateTime`的方法
+>
+> (2) `Statement`增加`executeLargeUpdate`方法，支持修改行数超过Integer.MAX_VALUE的更新操作
+>
+> (3) `Statement`和`ResultSet`增加泛型方法`getObject(columnStr, class)`方法以及对应的`setObject`方法，例如：
+>
+> ~~~
+> URL url = result.getObject("link", URL.class);
+> ~~~
+>
+> 准确说`getObject`方法是java 7新增的，只有`setObject`方法才是java 8新增的
 
