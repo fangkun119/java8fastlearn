@@ -1,46 +1,156 @@
-import java.io.*;
-import java.net.*;
-import java.nio.charset.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public class FilesDemo {
-   public static void main(String[] args) throws IOException {
-      Path path = Paths.get("FilesDemo.java");
-      byte[] bytes = Files.readAllBytes(path);
-      String content = new String(bytes, StandardCharsets.UTF_8);
-      System.out.println(content.substring(0, 100) + "...");
-      List<String> lines = Files.readAllLines(path);
-      System.out.println("Last line: " + lines.get(lines.size() - 1));
-      path = Paths.get("FilesDemo1.out");
-      content = content.replaceAll("e", "x");
-      Files.write(path, content.getBytes(StandardCharsets.UTF_8));
-      path = Paths.get("FilesDemo2.out");
-      Files.write(path, lines);
-      Collections.reverse(lines);
-      Files.write(path, lines, StandardOpenOption.APPEND);
-      URL url = new URL("http://horstmann.com");
+    private static final String NEW_LOG_PREFIX = "\n\t// ";
 
-      boolean deleted = Files.deleteIfExists(Paths.get("FilesDemo3.out"));
-      System.out.println(deleted);
+    private static Path filePath(String fileName) {
+        return Paths.get("./code/ch9/sec02/", fileName);
+    }
 
-      Files.copy(url.openStream(), Paths.get("FilesDemo3.out"));
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      Files.copy(Paths.get("FilesDemo3.out"), out);
-      System.out.println(out.toString("UTF-8").substring(0, 100) + "...");
+    public static void main(String[] args) throws IOException {
+        /*****
+         * 1. 对于小文件，可以将文件内容当做字符串或字符串列表来处理
+         */
 
-      Files.copy(Paths.get("FilesDemo3.out"), Paths.get("FilesDemo4.out"));
-      Files.move(Paths.get("FilesDemo4.out"), Paths.get("FilesDemo5.out"));
-      Files.copy(Paths.get("FilesDemo3.out"), Paths.get("FilesDemo5.out"), 
-         StandardCopyOption.REPLACE_EXISTING,
-         StandardCopyOption.COPY_ATTRIBUTES);      
-      Files.move(Paths.get("FilesDemo5.out"), Paths.get("FilesDemo6.out"), 
-         StandardCopyOption.ATOMIC_MOVE);
-      Files.delete(Paths.get("FilesDemo6.out"));
+        // 读取全部内容：Files.readAllBytes(Path)
+        byte[] bytes = Files.readAllBytes(filePath("FilesDemo.java"));
+        // 将byte[]转换为String（可指定编码）：new String(bytes, Charset)
+        String content = new String(bytes, StandardCharsets.UTF_8);
+        System.out.println(NEW_LOG_PREFIX + content.substring(0, 100) + "...");
+        // 输出
+        // import java.io.ByteArrayOutputStream;
+        // import java.io.IOException;
+        // import java.net.URL;
+        // import java.n...
 
-      Path newPath = Files.createTempFile(null, ".txt");
-      System.out.println(newPath);
-      newPath = Files.createTempDirectory("fred");
-      System.out.println(newPath);
-   }
+        // 按行读取内容
+        List<String> lines = Files.readAllLines(filePath("FilesDemo.java"));
+        System.out.println(NEW_LOG_PREFIX + "Last line: " + lines.get(lines.size() - 1));
+        // 输出
+        // Last line: }
+
+        // 以二进制方式覆盖写入（可指定编码）：Files.write(Path, byte[])
+        // 按行覆盖写入：Files.write(Path, List<String>)
+        content = content.replaceAll("e", "x");
+        Files.write(filePath("FilesDemo1.out"), content.getBytes(StandardCharsets.UTF_8));
+        Files.write(filePath("FilesDemo1.out"), lines);
+
+        // 以追加的方式写入：File.write(Path, List<String>, StandardOpenOption.APPEND)
+        Collections.reverse(lines);
+        Files.write(filePath("FilesDemo2.out"), lines, StandardOpenOption.APPEND);
+
+        // 如果存在则删除文件：Files.deleteIfExists(Path)
+        boolean deleted = Files.deleteIfExists(filePath("FilesDemo3.out"));
+        System.out.println(NEW_LOG_PREFIX + deleted);
+
+        /**
+         * 2.对于大文件，或二进制文件，可以考虑使用InputStream/OutputStream或者Reader/Writer
+         *   InputStream in   = Files.newInputStream(path);
+         *   OutputStream out = Files.newOutputStream(path);
+         *   Reader reader    = Files.newBufferedReader(path);
+         *   Writer writer    = Files.newBufferedWriter(path);
+         */
+        // 从InputStream拷贝到Path：Files.copy(InputStream, Path)
+        URL url = new URL("http://horstmann.com");
+        Files.copy(url.openStream(), filePath("FilesDemo3.out"));
+
+        // 从Path拷贝到OutputStream：Files.copy(Path, OutputStream)
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Files.copy(filePath("FilesDemo3.out"), out);
+        System.out.println(NEW_LOG_PREFIX + out.toString("UTF-8").substring(0, 100) + "...");
+        // <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+        // <html><head>
+        // <title>302 Found</title>
+        // </head><bod...
+
+        /**
+         * 创建文件和目录
+         */
+
+        // 创建新的目录: Files.createDirectory(Path)、
+        // 上一级目录必须存在，目标目录已经存在时会抛异常： Files.createDirectory(Path)
+        // 将缺失的上一级目录一起创建，目标目录已经存在时会抛异常： File.createDirectories(Path)
+        Path tmpDir = Files.createDirectory(Paths.get("tmp"));
+        Files.createDirectories(Paths.get("tmp"));
+        System.out.println(NEW_LOG_PREFIX + tmpDir.toAbsolutePath().toString());
+        // /Users/fangkun/Dev/git/java8note/tmp
+
+        // 创建空文件：Files.createFile(Path)
+        // 文件已经存在时会抛异常
+        Path tmpFile = Files.createFile(Paths.get("tmp.txt"));
+        System.out.println(NEW_LOG_PREFIX + tmpFile.toAbsolutePath().toString());
+        // /Users/fangkun/Dev/git/java8note/tmp.txt
+
+        // 检查文件/目录是否存在: Files.exists(Path)
+        System.out.println(NEW_LOG_PREFIX + Files.exists(tmpDir));
+        System.out.println(NEW_LOG_PREFIX + Files.exists(tmpFile));
+        // true
+        // true
+
+        // 删除文件或目录: Files.deleteIfExists(Path)
+        Files.deleteIfExists(tmpDir);
+        Files.deleteIfExists(tmpFile);
+        System.out.println(NEW_LOG_PREFIX + Files.exists(tmpDir));
+        System.out.println(NEW_LOG_PREFIX + Files.exists(tmpFile));
+        // false
+        // false
+
+        // 创建临时文件
+        // Files.createTempFile(dir, prefix, suffix);
+        // Files.createTempFile(     prefix, suffix);
+        // Files.createTempFile(dir, prefix        );
+        // Files.createTempFile(     prefix        );
+
+        Path newPath = Files.createTempFile(null, ".txt");
+        System.out.println(NEW_LOG_PREFIX + newPath);
+        // /var/folders/nb/n2wl0lms2g57q00_t5qd2nsc0000gn/T/14595181751598492480.txt
+
+        // 创建临时目录
+        // Files.createTempDirectory(dir, prefix, suffix);
+        // Files.createTempDirectory(     prefix, suffix);
+        // Files.createTempDirectory(dir, prefix        );
+        // Files.createTempDirectory(     prefix        );
+
+        newPath = Files.createTempDirectory("fred");
+        System.out.println(NEW_LOG_PREFIX + newPath);
+        // /var/folders/nb/n2wl0lms2g57q00_t5qd2nsc0000gn/T/fred16143100884822648692
+
+        /**
+         * 4. 复制、移动、和删除文件
+         */
+
+        // 从Path拷贝到Path: Files.copy(Path, Path)
+        Files.copy(
+                filePath("FilesDemo3.out"), filePath("FilesDemo4.out"));
+
+        // 从Path移动到Path：Files.move(Path, Path)
+        Files.move(
+                filePath("FilesDemo4.out"), filePath("FilesDemo5.out"));
+
+        // 拷贝设置（1）覆盖已存在文件StandardCopyOption.REPLACE_EXISTING (2) 拷贝文件属性StandardCopyOption.COPY_ATTRIBUTES
+        Files.copy(
+                filePath("FilesDemo3.out"), filePath("FilesDemo5.out"),
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.COPY_ATTRIBUTES);
+
+        // 原子移动文件、要么移动完成、要么源文件仍然存在：StandardCopyOption.ATOMIC_MOVE
+        Files.move(
+                filePath("FilesDemo5.out"), filePath("FilesDemo6.out"),
+                StandardCopyOption.ATOMIC_MOVE);
+
+        // 删除文件或空目录：Files.delete(Path)
+        Files.delete(filePath("FilesDemo6.out"));
+
+        // 仅在文件或空目录存在时删除：Files.deleteIfExists(Path)
+        boolean isDeleted = Files.deleteIfExists(filePath("FilesDemo6.out"));
+        System.out.println(NEW_LOG_PREFIX + isDeleted);
+
+        // 对于非空目录的删除，需要参考FileVisitor接口的API文档
+    }
 }
