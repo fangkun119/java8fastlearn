@@ -112,6 +112,8 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 ### 9.2.1 取代`File`类的`Path`接口
 
 > Path：(1)可能是含有多个目录名称的序列；(2)也可能带着一个文件名
+>
+> 代码位置：[../code/ch9/sec02/PathDemo.java](../code/ch9/sec02/PathDemo.java)
 
 #### (1) 绝对路径：`Paths.get()`
 
@@ -195,9 +197,9 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 > // 输出：null （相对路径没有root）
 > ```
 
-代码位置：[../code/ch9/sec02/PathDemo.java](../code/ch9/sec02/PathDemo.java)
-
 ### 9.2.2 文件操作
+
+> 代码位置：[../code/ch9/sec02/FilesDemo.java](../code/ch9/sec02/FilesDemo.java)
 
 #### (1) 读取和写入小文件
 
@@ -346,19 +348,71 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 > // 对于非空目录的删除，需要参考FileVisitor接口的API文档
 > ```
 
-## 9.3 实现`equals`、`hashCode`和`CompareTo`方法
+## 9.3 简化`equals`、`hashCode`和`CompareTo`方法的编写
 
-### 9.3.1 安全的null值相等测试
+> 代码位置：
+>
+> * [../code/ch9/sec03/Person.java](../code/ch9/sec03/Person.java)
+> * [../code/ch9/sec03/Point.java](../code/ch9/sec03/Point.java)
 
+### 9.3.1 使用`Objects.equals(Object, Object)`简化`equals`方法的编写
 
+> ```java
+> public boolean equals(Object otherObject) {
+>     // 先对顶部的对象进行null值判断、类型判断
+>     if (this == otherObject) {
+>        return true;
+>     }
+>     if (otherObject == null || this.getClass() != otherObject.getClass()) {
+>        return false;
+>     }
+>     Person other = (Person) otherObject;
+> 
+>     // Java 6的老式写法
+>     /*
+>     boolean isFirstEqual = false;
+>     if (null == this.first) {
+>         isFirstEqual = (null == other.first);
+>     } else {
+>         isFirstEqual = this.first.equals(other.first);
+>     }
+>     boolean isSecondEqual =
+>     ...
+>     return isFirstEqual && isSecondEqual;
+>      */
+> 
+>     // Java 7提供Objects.equals方法，来简化上面代码的代码
+>     // 对于Object.equals(a, b)
+>     // * a,b都是null时返回true
+>     // * 只有a是null时返回false
+>     // * 其他情况返回a.equals(b)
+>     return Objects.equals(first, other.first) && Objects.equals(last, other.last);
+> }
+> ```
 
-### 9.3.2 计算哈希码
+### 9.3.2 使用`Objects.hash(Object ...)`简化`hashCode`方法的编写
 
+> ```java
+> public int hashCode() {
+>     // Java 7提供方法，
+>     // 替代诸如 31*Object.hashCode(first) + Object.hashCode(second)这样的代码
+>     return Objects.hash(first, last);
+> }
+> ```
 
+### 9.3.3 使用`Integers.compare(Integer, Integer)`等方法来简化`compareTo`的编写
 
-### 9.3.3 比较数值类型对象
-
-
+> ```java
+> public int compareTo(Point other) {
+>     // 使用Java 7提供的方法，可以避免直接相减带来的溢出问题
+>     // Integer、Long、Short、Byte、Boolean都提供了各自的静态方法compare
+>     int diff = Integer.compare(x, other.x); // No risk of overflow
+>     if (diff != 0) {
+>         return diff;
+>     }
+>     return Integer.compare(y, other.y);
+> }
+> ```
 
 ## 9.4 安全需要
 
