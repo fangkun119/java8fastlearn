@@ -416,31 +416,158 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 
 ## 9.4 安全需要
 
-
+> Java 7要求运行RIA（富互联网应用程序、Java Applet及Web Start应用程序）需要求商业机构办法的证书进行签名来防止JAR包manifest entry中的`Permissions:sandbox`（或`Permissions:all-permission`）被串改，同时可以增加形如`Codebase: https://www.mycompany.com www.mycompany.com:8080`之类的限制，限定应用程序加载URL，来防止它们被黑客利用。但RIA仍然不是开发首选，只是出于维护旧的应用的需要。
 
 ## 9.5 其他改动
 
-### 9.5.1 字符串转换为数字
+代码位置
 
+> * [../code/ch9/sec05/Misc.java](../code/ch9/sec05/Misc.java)：9.5.1 ~ 9.5.3， 9.5.6
+> * [../code/ch9/sec05/ProcessDemo.java](../code/ch9/sec05/ProcessDemo.java)：9.5.4
+>
+> * [../code/ch9/sec05/ClassLoaderDemo.java](../code/ch9/sec05/ClassLoaderDemo.java)：9.5.5
 
+### 9.5.1 修复字符串”+123“转换为数字时的问题
+
+> ```java
+> // Java 8修复了形如"+1"的整形数字符串在被parse成整数时的bug
+> double   x1 = Double.parseDouble("+1.0");
+> int      n1 = Integer.parseInt("+1");
+> short    s1 = Short.parseShort("+1");
+> byte     b1 = Byte.parseByte("+1");
+> BigInteger bi1 = new BigInteger("+1");
+> int      n2 = Integer.decode("0x10");
+> int      n3 = Integer.decode("010");
+> Integer nw1 = Integer.valueOf("+1");
+> Long    lw1 = Long.valueOf("+1");
+> System.out.printf("%f %d %s %d %s %d %d %d %d\n", x1, n1, s1, b1, bi1, n2, n3, nw1, lw1);
+> // 输出： 1.000000 1 1 1 1 16 8 1 1
+> ```
 
 ### 9.5.2 全局Logger
 
-
+> Java 8提供了一个简洁又安全的形式来输出全局Logger，形式如下
+>
+> ```java
+> Logger.getGlobal().info("x1=" + 1.0);
+> // 输出： 信息: x1=1.0
+> ```
+>
+> 它用来解决老版本Java的如下问题：
+>
+> * `Logger.global.finest("x=" + x)` （已经deprecated了）需要初始化、并且容易造成静态初始化代码段死锁
+> * `Logger.getLogger(Logger.GLOBAL_LOGGER_NAME)`（来自Java6）使用起来比较繁琐
 
 ### 9.5.3 null检查
 
+> ```java
+> public void process(String directions) {
+>     // directions为null时，会抛出NullPointerException并且可以设置错误提示
+>     // 相比普通的null值检查，代码简洁并且更容易定位错误
+>     this.directions = Objects.requireNonNull(directions, "directions must not be null");
+> }
+> // 该方法抛出异常时的输出
+> // java.lang.NullPointerException: directions must not be null
+> // at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+> // at Misc.process(Misc.java:45)
+> // at Misc.main(Misc.java:25)
+> ```
 
+### 9.5.4 替代`Runtime.exec`的`ProcessBuilder`
 
-### 9.5.4 ProcessBuilder
+> 代码：[../code/ch9/sec05/ProcessDemo.java](../code/ch9/sec05/ProcessDemo.java)
+>
+> 替代Java5的Runtime.exec执行外部命令，可以使用builder模式，设置输入、输出、工作目录等
+>
+> ```java
+> // 例子1
+> ProcessBuilder builder1 = new ProcessBuilder("pwd");
+> builder1.redirectErrorStream(true);
+> builder1.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+> Process process1 = builder1.start();
+> process1.waitFor(10, TimeUnit.SECONDS);
+> // 输出 : /Users/fangkun/Dev/git/java8note
+> 
+> // 例子2
+> ProcessBuilder builder2 = new ProcessBuilder("grep", "[A-Za-z_][A-Za-z_0-9]*", "-o");
+> builder2.redirectInput(path("ProcessDemo.java").toFile());
+> builder2.redirectOutput(path("identifiers.txt").toFile());
+> Process process2 = builder2.start();
+> process2.waitFor(1, TimeUnit.MINUTES);
+> ```
 
+### 9.5.5 `URLClassLoader`的改进
 
-
-### 9.5.5 URLClassLoader
-
-
+> 代码：[../code/ch9/sec05/ClassLoaderDemo.java](../code/ch9/sec05/ClassLoaderDemo.java)
+>
+> Java 7的`URLClassLoader`实现了AutoClosable接口，可以放在try-with-resources语句中，防止资源泄漏
+>
+> ```java
+> try (URLClassLoader loader = new URLClassLoader(urls)) {
+>     Class<?> klass = loader.loadClass("org.junit.runner.JUnitCore");
+>     System.out.println(klass.getMethod("main", String[].class).invoke(null, (Object) args));
+> }
+> // 输出
+> // JUnit version 4.11
+> // Time: 0.004
+> // OK (0 tests)
+> ```
+>
+> 但是注意：如果仍然需要使用载入的类，就不应当关闭它，否则会抛ClassNotFoundException
 
 ### 9.5.6 BitSet
+
+> 一个表示bit序列的集合，计算非常高效
+>
+> (1) 构造`BitSet`
+>
+> ```java
+> // 用byte[]构造
+> byte[] bytes = {(byte) 0b10101100, (byte) 0b00101000};
+> BitSet primes = BitSet.valueOf(bytes);
+> System.out.println(primes);
+> // {2, 3, 5, 7, 11, 13}
+> 
+> // 用long[]构造
+> long[] longs = {0x100010116L, 0x1L, 0x1L, 0L, 0x1L};
+> BitSet powersOfTwo = BitSet.valueOf(longs);
+> System.out.println(powersOfTwo);
+> // {1, 2, 4, 8, 16, 32, 64, 128, 256}
+> ```
+>
+> (2) 转换成`byte[]`,` long[]`,` IntStream`
+>
+> ~~~java
+> // toByteArray()
+> for (byte bt : powersOfTwo.toByteArray()) {
+>     System.out.print(
+>             Integer.toBinaryString(
+>                     Byte.toUnsignedInt(bt)));
+> }
+> System.out.println();
+> // 1011011010001000000010000000000000001
+> 
+> // toLongArray()
+> for (long l : powersOfTwo.toLongArray()) {
+>     System.out.print(l + ",");
+> }
+> System.out.println();
+> // 4295033110,1,1,0,1,
+> 
+> // stream()：返回IntStream
+> powersOfTwo.stream().forEach(System.out::println);
+> // 1
+> // 2
+> // 4
+> // 8
+> // 16
+> // 32
+> // 64
+> // 128
+> // 256
+> ~~~
+
+
 
 
 
