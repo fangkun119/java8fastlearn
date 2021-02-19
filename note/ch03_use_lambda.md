@@ -1,6 +1,44 @@
-# CH03 Lambda的应用
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!--**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*-->
 
-[TOC]
+- [CH03 Lambda的应用](#ch03-lambda%E7%9A%84%E5%BA%94%E7%94%A8)
+  - [3.1 延迟执行](#31-%E5%BB%B6%E8%BF%9F%E6%89%A7%E8%A1%8C)
+    - [3.1.1 内容](#311-%E5%86%85%E5%AE%B9)
+    - [3.2.2 API](#322-api)
+      - [(1) `Supplier<T>`](#1-suppliert)
+  - [3.3 理解lambda作为参数时的传参过程](#33-%E7%90%86%E8%A7%A3lambda%E4%BD%9C%E4%B8%BA%E5%8F%82%E6%95%B0%E6%97%B6%E7%9A%84%E4%BC%A0%E5%8F%82%E8%BF%87%E7%A8%8B)
+    - [3.3.1 内容](#331-%E5%86%85%E5%AE%B9)
+    - [3.3.2 API](#332-api)
+      - [(1) `IntConsumer`](#1-intconsumer)
+      - [(2) `Runnable`](#2-runnable)
+  - [3.3 选择函数式接口（Functional Interface）](#33-%E9%80%89%E6%8B%A9%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3functional-interface)
+    - [3.3.1 使用函数式接口的好处](#331-%E4%BD%BF%E7%94%A8%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%A5%BD%E5%A4%84)
+    - [3.3.2 实例：编写并使用自定义的函数式接口](#332-%E5%AE%9E%E4%BE%8B%E7%BC%96%E5%86%99%E5%B9%B6%E4%BD%BF%E7%94%A8%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3)
+    - [3.3.3 生成组合函数](#333-%E7%94%9F%E6%88%90%E7%BB%84%E5%90%88%E5%87%BD%E6%95%B0)
+    - [3.3.4 Java 8为普通类型提供的函数式接口](#334-java-8%E4%B8%BA%E6%99%AE%E9%80%9A%E7%B1%BB%E5%9E%8B%E6%8F%90%E4%BE%9B%E7%9A%84%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3)
+    - [3.3.5 Java 8为原始类型提供的函数式接口](#335-java-8%E4%B8%BA%E5%8E%9F%E5%A7%8B%E7%B1%BB%E5%9E%8B%E6%8F%90%E4%BE%9B%E7%9A%84%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3)
+  - [3.4 把`函数`用作返回值](#34-%E6%8A%8A%E5%87%BD%E6%95%B0%E7%94%A8%E4%BD%9C%E8%BF%94%E5%9B%9E%E5%80%BC)
+  - [3.5 `函数`组合](#35-%E5%87%BD%E6%95%B0%E7%BB%84%E5%90%88)
+  - [3.6 按需将一组`函数`组合在一起，延迟到执行点一起执行](#36-%E6%8C%89%E9%9C%80%E5%B0%86%E4%B8%80%E7%BB%84%E5%87%BD%E6%95%B0%E7%BB%84%E5%90%88%E5%9C%A8%E4%B8%80%E8%B5%B7%E5%BB%B6%E8%BF%9F%E5%88%B0%E6%89%A7%E8%A1%8C%E7%82%B9%E4%B8%80%E8%B5%B7%E6%89%A7%E8%A1%8C)
+  - [3.7 让传入的`函数`并行执行](#37-%E8%AE%A9%E4%BC%A0%E5%85%A5%E7%9A%84%E5%87%BD%E6%95%B0%E5%B9%B6%E8%A1%8C%E6%89%A7%E8%A1%8C)
+  - [3.8 处理lambda执行过程中抛出的异常](#38-%E5%A4%84%E7%90%86lambda%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B%E4%B8%AD%E6%8A%9B%E5%87%BA%E7%9A%84%E5%BC%82%E5%B8%B8)
+    - [3.8.1 同步执行场景](#381-%E5%90%8C%E6%AD%A5%E6%89%A7%E8%A1%8C%E5%9C%BA%E6%99%AF)
+    - [3.8.2 异步执行场景](#382-%E5%BC%82%E6%AD%A5%E6%89%A7%E8%A1%8C%E5%9C%BA%E6%99%AF)
+      - [(1) 跨线程传递异常处理代码](#1-%E8%B7%A8%E7%BA%BF%E7%A8%8B%E4%BC%A0%E9%80%92%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E4%BB%A3%E7%A0%81)
+        - [例子1：通过lambda传入异常处理函数](#%E4%BE%8B%E5%AD%901%E9%80%9A%E8%BF%87lambda%E4%BC%A0%E5%85%A5%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0)
+        - [例子2：通过lambda传入异常处理函数，并且两个任务函数间有数据依赖](#%E4%BE%8B%E5%AD%902%E9%80%9A%E8%BF%87lambda%E4%BC%A0%E5%85%A5%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E5%B9%B6%E4%B8%94%E4%B8%A4%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%87%BD%E6%95%B0%E9%97%B4%E6%9C%89%E6%95%B0%E6%8D%AE%E4%BE%9D%E8%B5%96)
+        - [例子3：任务处理函数既收集返回结果、又收集遇到的异常，并返回给主线程](#%E4%BE%8B%E5%AD%903%E4%BB%BB%E5%8A%A1%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E6%97%A2%E6%94%B6%E9%9B%86%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E5%8F%88%E6%94%B6%E9%9B%86%E9%81%87%E5%88%B0%E7%9A%84%E5%BC%82%E5%B8%B8%E5%B9%B6%E8%BF%94%E5%9B%9E%E7%BB%99%E4%B8%BB%E7%BA%BF%E7%A8%8B)
+      - [(2) 处理`函数式接口`的异常抛出声明与lambda表达式不一致的问题](#2-%E5%A4%84%E7%90%86%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%BC%82%E5%B8%B8%E6%8A%9B%E5%87%BA%E5%A3%B0%E6%98%8E%E4%B8%8Elambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%E4%B8%8D%E4%B8%80%E8%87%B4%E7%9A%84%E9%97%AE%E9%A2%98)
+  - [3.9 使用lambda表达式时用到的泛型问题](#39-%E4%BD%BF%E7%94%A8lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%97%B6%E7%94%A8%E5%88%B0%E7%9A%84%E6%B3%9B%E5%9E%8B%E9%97%AE%E9%A2%98)
+    - [3.9.1 解决泛型擦除问题](#391-%E8%A7%A3%E5%86%B3%E6%B3%9B%E5%9E%8B%E6%93%A6%E9%99%A4%E9%97%AE%E9%A2%98)
+      - [(1) java 6的解决办法](#1-java-6%E7%9A%84%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95)
+      - [(2) 使用lambda的解决办法](#2-%E4%BD%BF%E7%94%A8lambda%E7%9A%84%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95)
+    - [3.9.2 协变、逆变问题](#392-%E5%8D%8F%E5%8F%98%E9%80%86%E5%8F%98%E9%97%AE%E9%A2%98)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# CH03 Lambda的应用
 
 ## 3.1 延迟执行
 

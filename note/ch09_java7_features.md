@@ -1,6 +1,40 @@
-# CH09 Java 7特性
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!--**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*-->
 
-[TOC]
+- [CH09 Java 7特性](#ch09-java-7%E7%89%B9%E6%80%A7)
+  - [9.1 异常处理改进](#91-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E6%94%B9%E8%BF%9B)
+    - [9.1.1 使用`try-with-resources`自动释放资源](#911-%E4%BD%BF%E7%94%A8try-with-resources%E8%87%AA%E5%8A%A8%E9%87%8A%E6%94%BE%E8%B5%84%E6%BA%90)
+    - [9.1.2 应对`“处理异常时抛出的新异常”`场景](#912-%E5%BA%94%E5%AF%B9%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8%E6%97%B6%E6%8A%9B%E5%87%BA%E7%9A%84%E6%96%B0%E5%BC%82%E5%B8%B8%E5%9C%BA%E6%99%AF)
+    - [9.1.3 捕获多个异常：`catch(ExceptionA|ExceptionB e)`](#913-%E6%8D%95%E8%8E%B7%E5%A4%9A%E4%B8%AA%E5%BC%82%E5%B8%B8catchexceptionaexceptionb-e)
+    - [9.1.4 简化处理反射方法时的异常：`catch(ReflectiveOperationException e)`](#914-%E7%AE%80%E5%8C%96%E5%A4%84%E7%90%86%E5%8F%8D%E5%B0%84%E6%96%B9%E6%B3%95%E6%97%B6%E7%9A%84%E5%BC%82%E5%B8%B8catchreflectiveoperationexception-e)
+  - [9.2 使用文件](#92-%E4%BD%BF%E7%94%A8%E6%96%87%E4%BB%B6)
+    - [9.2.1 取代`File`类的`Path`接口](#921-%E5%8F%96%E4%BB%A3file%E7%B1%BB%E7%9A%84path%E6%8E%A5%E5%8F%A3)
+      - [(1) 绝对路径：`Paths.get()`](#1-%E7%BB%9D%E5%AF%B9%E8%B7%AF%E5%BE%84pathsget)
+      - [(2) 路径解析：`p.resolve(q)`，`p.resolveSibling(q)`，`p.relativize(q)`，`p.normalize()`](#2-%E8%B7%AF%E5%BE%84%E8%A7%A3%E6%9E%90presolveqpresolvesiblingqprelativizeqpnormalize)
+      - [(3) 路径拆分：`p.getParent()`，`p.getFileName()`，`p.getRoot()`](#3-%E8%B7%AF%E5%BE%84%E6%8B%86%E5%88%86pgetparentpgetfilenamepgetroot)
+    - [9.2.2 文件操作](#922-%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C)
+      - [(1) 读取和写入小文件](#1-%E8%AF%BB%E5%8F%96%E5%92%8C%E5%86%99%E5%85%A5%E5%B0%8F%E6%96%87%E4%BB%B6)
+      - [(2) 读取和写入大文件](#2-%E8%AF%BB%E5%8F%96%E5%92%8C%E5%86%99%E5%85%A5%E5%A4%A7%E6%96%87%E4%BB%B6)
+      - [(3) 创建文件和目录](#3-%E5%88%9B%E5%BB%BA%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95)
+      - [(4) 创建临时文件和目录](#4-%E5%88%9B%E5%BB%BA%E4%B8%B4%E6%97%B6%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95)
+      - [(5) 复制、移动、和删除文件](#5-%E5%A4%8D%E5%88%B6%E7%A7%BB%E5%8A%A8%E5%92%8C%E5%88%A0%E9%99%A4%E6%96%87%E4%BB%B6)
+  - [9.3 简化`equals`、`hashCode`和`CompareTo`方法的编写](#93-%E7%AE%80%E5%8C%96equalshashcode%E5%92%8Ccompareto%E6%96%B9%E6%B3%95%E7%9A%84%E7%BC%96%E5%86%99)
+    - [9.3.1 使用`Objects.equals(Object, Object)`简化`equals`方法的编写](#931-%E4%BD%BF%E7%94%A8objectsequalsobject-object%E7%AE%80%E5%8C%96equals%E6%96%B9%E6%B3%95%E7%9A%84%E7%BC%96%E5%86%99)
+    - [9.3.2 使用`Objects.hash(Object ...)`简化`hashCode`方法的编写](#932-%E4%BD%BF%E7%94%A8objectshashobject-%E7%AE%80%E5%8C%96hashcode%E6%96%B9%E6%B3%95%E7%9A%84%E7%BC%96%E5%86%99)
+    - [9.3.3 使用`Integers.compare(Integer, Integer)`等方法来简化`compareTo`的编写](#933-%E4%BD%BF%E7%94%A8integerscompareinteger-integer%E7%AD%89%E6%96%B9%E6%B3%95%E6%9D%A5%E7%AE%80%E5%8C%96compareto%E7%9A%84%E7%BC%96%E5%86%99)
+  - [9.4 安全需要](#94-%E5%AE%89%E5%85%A8%E9%9C%80%E8%A6%81)
+  - [9.5 其他改动](#95-%E5%85%B6%E4%BB%96%E6%94%B9%E5%8A%A8)
+    - [9.5.1 修复字符串”+123“转换为数字时的问题](#951-%E4%BF%AE%E5%A4%8D%E5%AD%97%E7%AC%A6%E4%B8%B2123%E8%BD%AC%E6%8D%A2%E4%B8%BA%E6%95%B0%E5%AD%97%E6%97%B6%E7%9A%84%E9%97%AE%E9%A2%98)
+    - [9.5.2 全局Logger](#952-%E5%85%A8%E5%B1%80logger)
+    - [9.5.3 null检查](#953-null%E6%A3%80%E6%9F%A5)
+    - [9.5.4 替代`Runtime.exec`的`ProcessBuilder`](#954-%E6%9B%BF%E4%BB%A3runtimeexec%E7%9A%84processbuilder)
+    - [9.5.5 `URLClassLoader`的改进](#955-urlclassloader%E7%9A%84%E6%94%B9%E8%BF%9B)
+    - [9.5.6 BitSet](#956-bitset)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# CH09 Java 7特性
 
 > 除了`字符串switch语句`、`二进制数字表示`、`下划线数字表示`、`改进的类型推断等`，还包括如下非常有用的改进
 

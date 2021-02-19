@@ -1,6 +1,70 @@
-# CH08 其他改进
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!--**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*-->
 
-[TOC]
+- [CH08 其他改进](#ch08-%E5%85%B6%E4%BB%96%E6%94%B9%E8%BF%9B)
+  - [8.1 类似python的字符串拼接](#81-%E7%B1%BB%E4%BC%BCpython%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%8B%BC%E6%8E%A5)
+  - [8.2 数字类](#82-%E6%95%B0%E5%AD%97%E7%B1%BB)
+    - [8.2.1 包装类的`BYTES`字段](#821-%E5%8C%85%E8%A3%85%E7%B1%BB%E7%9A%84bytes%E5%AD%97%E6%AE%B5)
+    - [8.2.2 包装类`hashCode`静态方法](#822-%E5%8C%85%E8%A3%85%E7%B1%BBhashcode%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+    - [8.2.3 用于Stream聚合函数的静态方法](#823-%E7%94%A8%E4%BA%8Estream%E8%81%9A%E5%90%88%E5%87%BD%E6%95%B0%E7%9A%84%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+      - [(1) `sum`，`max`、`min`](#1-summaxmin)
+      - [(2) `logicalAnd`, `logicalOr`, `logicalXor`](#2-logicaland-logicalor-logicalxor)
+    - [8.2.4 无符号运算支持](#824-%E6%97%A0%E7%AC%A6%E5%8F%B7%E8%BF%90%E7%AE%97%E6%94%AF%E6%8C%81)
+      - [(1) Long和Integer的`compareUnsigned`,` divideUnsigned`, `remainderUnsigned`静态方法](#1-long%E5%92%8Cinteger%E7%9A%84compareunsigned-divideunsigned-remainderunsigned%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+      - [(2) Byte，Short，Integer的`toUnsignedInt`静态方法](#2-byteshortinteger%E7%9A%84tounsignedint%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+      - [(3) Integer的`toUnsignedLong`静态方法](#3-integer%E7%9A%84tounsignedlong%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+      - [(4) 浮点数`isFinite`检查](#4-%E6%B5%AE%E7%82%B9%E6%95%B0isfinite%E6%A3%80%E6%9F%A5)
+      - [(5) 从BigInteger提取原始类型：`intValueExact`、`longValueExact`、`shortValueExact`、`byteValueExact`](#5-%E4%BB%8Ebiginteger%E6%8F%90%E5%8F%96%E5%8E%9F%E5%A7%8B%E7%B1%BB%E5%9E%8Bintvalueexactlongvalueexactshortvalueexactbytevalueexact)
+  - [8.3 新的数学函数](#83-%E6%96%B0%E7%9A%84%E6%95%B0%E5%AD%A6%E5%87%BD%E6%95%B0)
+    - [8.3.1 带有溢出检查的算数运算：`Math.*Exact`](#831-%E5%B8%A6%E6%9C%89%E6%BA%A2%E5%87%BA%E6%A3%80%E6%9F%A5%E7%9A%84%E7%AE%97%E6%95%B0%E8%BF%90%E7%AE%97mathexact)
+    - [8.3.2 带有溢出检查的数值转换：`Math.to*Exact`](#832-%E5%B8%A6%E6%9C%89%E6%BA%A2%E5%87%BA%E6%A3%80%E6%9F%A5%E7%9A%84%E6%95%B0%E5%80%BC%E8%BD%AC%E6%8D%A2mathtoexact)
+    - [8.3.3 避免结果为负问题的求模函数：`Math.floorMod`](#833-%E9%81%BF%E5%85%8D%E7%BB%93%E6%9E%9C%E4%B8%BA%E8%B4%9F%E9%97%AE%E9%A2%98%E7%9A%84%E6%B1%82%E6%A8%A1%E5%87%BD%E6%95%B0mathfloormod)
+    - [8.3.4 返回比指定值小但是最接近的浮点数: `Math.nextDown`](#834-%E8%BF%94%E5%9B%9E%E6%AF%94%E6%8C%87%E5%AE%9A%E5%80%BC%E5%B0%8F%E4%BD%86%E6%98%AF%E6%9C%80%E6%8E%A5%E8%BF%91%E7%9A%84%E6%B5%AE%E7%82%B9%E6%95%B0-mathnextdown)
+  - [8.4 集合](#84-%E9%9B%86%E5%90%88)
+    - [8.4.1 集合类中新增的方法](#841-%E9%9B%86%E5%90%88%E7%B1%BB%E4%B8%AD%E6%96%B0%E5%A2%9E%E7%9A%84%E6%96%B9%E6%B3%95)
+    - [8.4.2 比较器](#842-%E6%AF%94%E8%BE%83%E5%99%A8)
+      - [(1) 基于字段的比较器：`Comparator.comparing(keyExtractor)`](#1-%E5%9F%BA%E4%BA%8E%E5%AD%97%E6%AE%B5%E7%9A%84%E6%AF%94%E8%BE%83%E5%99%A8comparatorcomparingkeyextractor)
+      - [(2) 多级比较器：`Comparator.thenComparing(keyExtractor)`](#2-%E5%A4%9A%E7%BA%A7%E6%AF%94%E8%BE%83%E5%99%A8comparatorthencomparingkeyextractor)
+      - [(3) 基于字段及排序规则来比较：`Comparator.comparing(keyExtractor,keyComparator)`](#3-%E5%9F%BA%E4%BA%8E%E5%AD%97%E6%AE%B5%E5%8F%8A%E6%8E%92%E5%BA%8F%E8%A7%84%E5%88%99%E6%9D%A5%E6%AF%94%E8%BE%83comparatorcomparingkeyextractorkeycomparator)
+      - [(4) 避免int/long/double的装箱拆箱的比较器：`Comparator.comparingInt/Long/Double(keyExtractor)`](#4-%E9%81%BF%E5%85%8Dintlongdouble%E7%9A%84%E8%A3%85%E7%AE%B1%E6%8B%86%E7%AE%B1%E7%9A%84%E6%AF%94%E8%BE%83%E5%99%A8comparatorcomparingintlongdoublekeyextractor)
+      - [(5) 兼容null值的比较器：`Comparator.nullsFirst(comparator)`](#5-%E5%85%BC%E5%AE%B9null%E5%80%BC%E7%9A%84%E6%AF%94%E8%BE%83%E5%99%A8comparatornullsfirstcomparator)
+      - [(6) 倒序比较器：`Comparator.reversed()`](#6-%E5%80%92%E5%BA%8F%E6%AF%94%E8%BE%83%E5%99%A8comparatorreversed)
+  - [8.5 使用文件](#85-%E4%BD%BF%E7%94%A8%E6%96%87%E4%BB%B6)
+    - [8.5.1 读取文件行的流：`Files.lines`方法](#851-%E8%AF%BB%E5%8F%96%E6%96%87%E4%BB%B6%E8%A1%8C%E7%9A%84%E6%B5%81fileslines%E6%96%B9%E6%B3%95)
+      - [(1) 按行读取文件：`Files.lines(Path)`](#1-%E6%8C%89%E8%A1%8C%E8%AF%BB%E5%8F%96%E6%96%87%E4%BB%B6fileslinespath)
+      - [(2) 按行读取其他数据：`BufferedReader.lines()`](#2-%E6%8C%89%E8%A1%8C%E8%AF%BB%E5%8F%96%E5%85%B6%E4%BB%96%E6%95%B0%E6%8D%AEbufferedreaderlines)
+      - [(3) 抛出的异常：IOException变为UncheckedIOException](#3-%E6%8A%9B%E5%87%BA%E7%9A%84%E5%BC%82%E5%B8%B8ioexception%E5%8F%98%E4%B8%BAuncheckedioexception)
+    - [8.5.2 遍历目录项的流（`Stream<Path>`）](#852-%E9%81%8D%E5%8E%86%E7%9B%AE%E5%BD%95%E9%A1%B9%E7%9A%84%E6%B5%81streampath)
+      - [(1) `Files.list(Path)`](#1-fileslistpath)
+      - [(2) ` Files.walk(Path)`](#2--fileswalkpath)
+      - [(3) `Files.find(Path, maxDepth, FileVisitOption...)`](#3-filesfindpath-maxdepth-filevisitoption)
+    - [8.5.3 Base64](#853-base64)
+      - [(1) 字符串编码/解码](#1-%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%BC%96%E7%A0%81%E8%A7%A3%E7%A0%81)
+      - [(2) 自动编码/解码的流](#2-%E8%87%AA%E5%8A%A8%E7%BC%96%E7%A0%81%E8%A7%A3%E7%A0%81%E7%9A%84%E6%B5%81)
+  - [8.6 注解](#86-%E6%B3%A8%E8%A7%A3)
+    - [8.6.1 可重复的注解](#861-%E5%8F%AF%E9%87%8D%E5%A4%8D%E7%9A%84%E6%B3%A8%E8%A7%A3)
+      - [(1) 使用可重复的注解](#1-%E4%BD%BF%E7%94%A8%E5%8F%AF%E9%87%8D%E5%A4%8D%E7%9A%84%E6%B3%A8%E8%A7%A3)
+      - [(2) 编写可重复的注解](#2-%E7%BC%96%E5%86%99%E5%8F%AF%E9%87%8D%E5%A4%8D%E7%9A%84%E6%B3%A8%E8%A7%A3)
+      - [(3) 例子](#3-%E4%BE%8B%E5%AD%90)
+    - [8.6.2 可用于类型的注解](#862-%E5%8F%AF%E7%94%A8%E4%BA%8E%E7%B1%BB%E5%9E%8B%E7%9A%84%E6%B3%A8%E8%A7%A3)
+    - [8.6.3 方法参数反射](#863-%E6%96%B9%E6%B3%95%E5%8F%82%E6%95%B0%E5%8F%8D%E5%B0%84)
+  - [8.7 其他改进](#87-%E5%85%B6%E4%BB%96%E6%94%B9%E8%BF%9B)
+    - [8.7.1 Null检查：`Objects.isNull`和`Objects.nonNull`](#871-null%E6%A3%80%E6%9F%A5objectsisnull%E5%92%8Cobjectsnonnull)
+    - [8.7.2 延迟消息](#872-%E5%BB%B6%E8%BF%9F%E6%B6%88%E6%81%AF)
+      - [(1) `java.util.Logger`对延迟操作的支持](#1-javautillogger%E5%AF%B9%E5%BB%B6%E8%BF%9F%E6%93%8D%E4%BD%9C%E7%9A%84%E6%94%AF%E6%8C%81)
+      - [(2) `Object.requireNonNull`的lambda版本](#2-objectrequirenonnull%E7%9A%84lambda%E7%89%88%E6%9C%AC)
+    - [8.7.3 正则表达式](#873-%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+      - [(1) 用`组名`提取`命名捕获组`匹配的内容](#1-%E7%94%A8%E7%BB%84%E5%90%8D%E6%8F%90%E5%8F%96%E5%91%BD%E5%90%8D%E6%8D%95%E8%8E%B7%E7%BB%84%E5%8C%B9%E9%85%8D%E7%9A%84%E5%86%85%E5%AE%B9)
+      - [(2) 用`正则表达式`生成`Stream<String>`](#2-%E7%94%A8%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%94%9F%E6%88%90streamstring)
+    - [8.7.4 语言环境](#874-%E8%AF%AD%E8%A8%80%E7%8E%AF%E5%A2%83)
+      - [(1) 语言环境](#1-%E8%AF%AD%E8%A8%80%E7%8E%AF%E5%A2%83)
+      - [(2) 语言范围查找](#2-%E8%AF%AD%E8%A8%80%E8%8C%83%E5%9B%B4%E6%9F%A5%E6%89%BE)
+    - [8.7.5 JDBC](#875-jdbc)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# CH08 其他改进
 
 ## 8.1 类似python的字符串拼接
 

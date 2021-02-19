@@ -1,6 +1,52 @@
-# CH06 并发增强
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!--**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*-->
 
-[TOC]
+- [CH06 并发增强](#ch06-%E5%B9%B6%E5%8F%91%E5%A2%9E%E5%BC%BA)
+  - [6.1 原子值和乐观锁](#61-%E5%8E%9F%E5%AD%90%E5%80%BC%E5%92%8C%E4%B9%90%E8%A7%82%E9%94%81)
+    - [6.1.1 Java 5的乐观锁（CAS）](#611-java-5%E7%9A%84%E4%B9%90%E8%A7%82%E9%94%81cas)
+      - [错误用法](#%E9%94%99%E8%AF%AF%E7%94%A8%E6%B3%95)
+      - [正确用法](#%E6%AD%A3%E7%A1%AE%E7%94%A8%E6%B3%95)
+    - [6.1.2 Java 8提供的操作](#612-java-8%E6%8F%90%E4%BE%9B%E7%9A%84%E6%93%8D%E4%BD%9C)
+      - [(1) 乐观锁（CAS）封装](#1-%E4%B9%90%E8%A7%82%E9%94%81cas%E5%B0%81%E8%A3%85)
+        - [`updateAndGet和accumulateAndGet`：返回`updated value`](#updateandget%E5%92%8Caccumulateandget%E8%BF%94%E5%9B%9Eupdated-value)
+        - [`getAndUpdate`和`getAndAccumulate`：返回`previous value`](#getandupdate%E5%92%8Cgetandaccumulate%E8%BF%94%E5%9B%9Eprevious-value)
+        - [更多的原子类](#%E6%9B%B4%E5%A4%9A%E7%9A%84%E5%8E%9F%E5%AD%90%E7%B1%BB)
+      - [(2) 乐观锁分组封装](#2-%E4%B9%90%E8%A7%82%E9%94%81%E5%88%86%E7%BB%84%E5%B0%81%E8%A3%85)
+        - [`LongAdder` / `DoubleAdder`](#longadder--doubleadder)
+        - [`LongAccumulator` / `DoubleAccumulator`](#longaccumulator--doubleaccumulator)
+      - [(3) 更加底层的乐观锁API：`StampedLock`](#3-%E6%9B%B4%E5%8A%A0%E5%BA%95%E5%B1%82%E7%9A%84%E4%B9%90%E8%A7%82%E9%94%81apistampedlock)
+  - [6.2 ConcurrentHashMap改进](#62-concurrenthashmap%E6%94%B9%E8%BF%9B)
+    - [6.2.0 设计更新](#620-%E8%AE%BE%E8%AE%A1%E6%9B%B4%E6%96%B0)
+    - [6.2.1 更新值](#621-%E6%9B%B4%E6%96%B0%E5%80%BC)
+      - [(1) 不能保证原子性的方法组合：`put`和`get`](#1-%E4%B8%8D%E8%83%BD%E4%BF%9D%E8%AF%81%E5%8E%9F%E5%AD%90%E6%80%A7%E7%9A%84%E6%96%B9%E6%B3%95%E7%BB%84%E5%90%88put%E5%92%8Cget)
+      - [(2) 使用基于乐观锁的方法`replace`来更新](#2-%E4%BD%BF%E7%94%A8%E5%9F%BA%E4%BA%8E%E4%B9%90%E8%A7%82%E9%94%81%E7%9A%84%E6%96%B9%E6%B3%95replace%E6%9D%A5%E6%9B%B4%E6%96%B0)
+      - [(3) 用`LongAdder`的原子属性来确保线程安全](#3-%E7%94%A8longadder%E7%9A%84%E5%8E%9F%E5%AD%90%E5%B1%9E%E6%80%A7%E6%9D%A5%E7%A1%AE%E4%BF%9D%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)
+      - [(4) 传入lambda表达式并原子执行：`compute`](#4-%E4%BC%A0%E5%85%A5lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%B9%B6%E5%8E%9F%E5%AD%90%E6%89%A7%E8%A1%8Ccompute)
+      - [(5) 传入lambda表达式并原子执行：merge](#5-%E4%BC%A0%E5%85%A5lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%B9%B6%E5%8E%9F%E5%AD%90%E6%89%A7%E8%A1%8Cmerge)
+    - [6.2.2 批量数据操作](#622-%E6%89%B9%E9%87%8F%E6%95%B0%E6%8D%AE%E6%93%8D%E4%BD%9C)
+      - [6.2.2.1 介绍](#6221-%E4%BB%8B%E7%BB%8D)
+    - [6.2.3 Set视图](#623-set%E8%A7%86%E5%9B%BE)
+      - [(1) 用静态方法`ConcurrentHashMap.<K>newKeySet()`新建一个支持并发的`Set<T>`](#1-%E7%94%A8%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95concurrenthashmapknewkeyset%E6%96%B0%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%94%AF%E6%8C%81%E5%B9%B6%E5%8F%91%E7%9A%84sett)
+      - [(2) 用方法`keySet(V)`将已有的`ConcurrentHashMap<K,V>`映射成`Set<K>`并共享底层数据](#2-%E7%94%A8%E6%96%B9%E6%B3%95keysetv%E5%B0%86%E5%B7%B2%E6%9C%89%E7%9A%84concurrenthashmapkv%E6%98%A0%E5%B0%84%E6%88%90setk%E5%B9%B6%E5%85%B1%E4%BA%AB%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE)
+  - [6.3 并行数组操作](#63-%E5%B9%B6%E8%A1%8C%E6%95%B0%E7%BB%84%E6%93%8D%E4%BD%9C)
+  - [6.4 `CompletableFuture<T>`](#64-completablefuturet)
+    - [6.4.1 Java 6中的`Future`](#641-java-6%E4%B8%AD%E7%9A%84future)
+    - [6.4.2 `CompletableFuture`](#642-completablefuture)
+      - [功能](#%E5%8A%9F%E8%83%BD)
+      - [例子](#%E4%BE%8B%E5%AD%90)
+    - [6.4.3 如何创建CompeletableFuture流水线](#643-%E5%A6%82%E4%BD%95%E5%88%9B%E5%BB%BAcompeletablefuture%E6%B5%81%E6%B0%B4%E7%BA%BF)
+      - [步骤1：创建CompletableFuture对象](#%E6%AD%A5%E9%AA%A41%E5%88%9B%E5%BB%BAcompletablefuture%E5%AF%B9%E8%B1%A1)
+      - [步骤2：为流水线上添加Action](#%E6%AD%A5%E9%AA%A42%E4%B8%BA%E6%B5%81%E6%B0%B4%E7%BA%BF%E4%B8%8A%E6%B7%BB%E5%8A%A0action)
+      - [步骤3：指定最终步骤](#%E6%AD%A5%E9%AA%A43%E6%8C%87%E5%AE%9A%E6%9C%80%E7%BB%88%E6%AD%A5%E9%AA%A4)
+      - [例子：将上面三个步骤串行起来](#%E4%BE%8B%E5%AD%90%E5%B0%86%E4%B8%8A%E9%9D%A2%E4%B8%89%E4%B8%AA%E6%AD%A5%E9%AA%A4%E4%B8%B2%E8%A1%8C%E8%B5%B7%E6%9D%A5)
+    - [6.4.4  编写异步操作](#644--%E7%BC%96%E5%86%99%E5%BC%82%E6%AD%A5%E6%93%8D%E4%BD%9C)
+      - [(1) 为流水线添加Action的API](#1-%E4%B8%BA%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%B7%BB%E5%8A%A0action%E7%9A%84api)
+      - [(2) 组合多个CompletableFuture](#2-%E7%BB%84%E5%90%88%E5%A4%9A%E4%B8%AAcompletablefuture)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# CH06 并发增强
 
 > 要点包括
 >

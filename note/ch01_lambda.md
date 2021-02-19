@@ -1,6 +1,36 @@
-# CH01 Lambda表达式
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!--**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*-->
 
-[TOC]
+- [CH01 Lambda表达式](#ch01-lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+  - [1.1 为什么要使用Lambda表达式](#11-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BD%BF%E7%94%A8lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+  - [1.2 Lambda表达式的语法](#12-lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%E7%9A%84%E8%AF%AD%E6%B3%95)
+  - [1.3 函数式接口](#13-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3)
+  - [1.4 方法引用](#14-%E6%96%B9%E6%B3%95%E5%BC%95%E7%94%A8)
+    - [1.4.1 三种形式](#141-%E4%B8%89%E7%A7%8D%E5%BD%A2%E5%BC%8F)
+      - [(1) `类::静态方法`](#1-%E7%B1%BB%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+      - [(2) `对象::静态方法`](#2-%E5%AF%B9%E8%B1%A1%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+      - [(3) `类::实例方法`](#3-%E7%B1%BB%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95)
+    - [1.4.2 通过`this`和`super`进行实例方法引用](#142-%E9%80%9A%E8%BF%87this%E5%92%8Csuper%E8%BF%9B%E8%A1%8C%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95%E5%BC%95%E7%94%A8)
+      - [(1) `this::实例方法`](#1-this%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95)
+      - [(2) `super::实例方法`](#2-super%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95)
+  - [1.5 构造器引用](#15-%E6%9E%84%E9%80%A0%E5%99%A8%E5%BC%95%E7%94%A8)
+    - [1.5.1 `Class::new`](#151-classnew)
+    - [1.5.2 Class[]::new(#152-classnew)
+    - [1.5.3 附录](#153-%E9%99%84%E5%BD%95)
+      - [附录1：解决泛型擦除带来的类型丢失问题](#%E9%99%84%E5%BD%951%E8%A7%A3%E5%86%B3%E6%B3%9B%E5%9E%8B%E6%93%A6%E9%99%A4%E5%B8%A6%E6%9D%A5%E7%9A%84%E7%B1%BB%E5%9E%8B%E4%B8%A2%E5%A4%B1%E9%97%AE%E9%A2%98)
+      - [附录2：理解`Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button`](#%E9%99%84%E5%BD%952%E7%90%86%E8%A7%A3streambutton-stream--labelsstreammapbuttonnew-%E7%AD%89%E4%BB%B7%E4%BA%8Ex---new-button)
+  - [1.6 变量访问权限](#16-%E5%8F%98%E9%87%8F%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90)
+  - [1.7 接口的默认方法](#17-%E6%8E%A5%E5%8F%A3%E7%9A%84%E9%BB%98%E8%AE%A4%E6%96%B9%E6%B3%95)
+    - [1.7.1 接口的默认方法（`default`）](#171-%E6%8E%A5%E5%8F%A3%E7%9A%84%E9%BB%98%E8%AE%A4%E6%96%B9%E6%B3%95default)
+    - [1.7.2 命名冲突](#172-%E5%91%BD%E5%90%8D%E5%86%B2%E7%AA%81)
+      - [`父类、接口`冲突：使用父类](#%E7%88%B6%E7%B1%BB%E6%8E%A5%E5%8F%A3%E5%86%B2%E7%AA%81%E4%BD%BF%E7%94%A8%E7%88%B6%E7%B1%BB)
+      - [`接口、接口`冲突：必须手动指定](#%E6%8E%A5%E5%8F%A3%E6%8E%A5%E5%8F%A3%E5%86%B2%E7%AA%81%E5%BF%85%E9%A1%BB%E6%89%8B%E5%8A%A8%E6%8C%87%E5%AE%9A)
+  - [1.8 接口静态方法](#18-%E6%8E%A5%E5%8F%A3%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# CH01 Lambda表达式
 
 ## 1.1 为什么要使用Lambda表达式
 

@@ -1,6 +1,24 @@
-# CH05 Date and Time
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!--**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*-->
 
-[TOC]
+- [CH05 Date and Time](#ch05-date-and-time)
+  - [5.1 时间线](#51-%E6%97%B6%E9%97%B4%E7%BA%BF)
+  - [5.2 本地日期: `LocalDate`](#52-%E6%9C%AC%E5%9C%B0%E6%97%A5%E6%9C%9F-localdate)
+  - [5.3 日期矫正器：`TemporalAdjuster`、`TemporalAdjusters`](#53-%E6%97%A5%E6%9C%9F%E7%9F%AB%E6%AD%A3%E5%99%A8temporaladjustertemporaladjusters)
+  - [5.4 本地时间：`LocalTime`](#54-%E6%9C%AC%E5%9C%B0%E6%97%B6%E9%97%B4localtime)
+  - [5.5  带时区的时间](#55--%E5%B8%A6%E6%97%B6%E5%8C%BA%E7%9A%84%E6%97%B6%E9%97%B4)
+  - [5.6 格式化解析：`DateTimeFormatter`](#56-%E6%A0%BC%E5%BC%8F%E5%8C%96%E8%A7%A3%E6%9E%90datetimeformatter)
+    - [5.6.1 使用预定义格式](#561-%E4%BD%BF%E7%94%A8%E9%A2%84%E5%AE%9A%E4%B9%89%E6%A0%BC%E5%BC%8F)
+      - [(1) 标准格式（机器可读）](#1-%E6%A0%87%E5%87%86%E6%A0%BC%E5%BC%8F%E6%9C%BA%E5%99%A8%E5%8F%AF%E8%AF%BB)
+      - [(2) 语言环境相关格式（对人类阅读友好）](#2-%E8%AF%AD%E8%A8%80%E7%8E%AF%E5%A2%83%E7%9B%B8%E5%85%B3%E6%A0%BC%E5%BC%8F%E5%AF%B9%E4%BA%BA%E7%B1%BB%E9%98%85%E8%AF%BB%E5%8F%8B%E5%A5%BD)
+      - [(3) 指定输出模式](#3-%E6%8C%87%E5%AE%9A%E8%BE%93%E5%87%BA%E6%A8%A1%E5%BC%8F)
+      - [(4) 从字符串解析得到输出模式](#4-%E4%BB%8E%E5%AD%97%E7%AC%A6%E4%B8%B2%E8%A7%A3%E6%9E%90%E5%BE%97%E5%88%B0%E8%BE%93%E5%87%BA%E6%A8%A1%E5%BC%8F)
+  - [5.7 与老式API互操作](#57-%E4%B8%8E%E8%80%81%E5%BC%8Fapi%E4%BA%92%E6%93%8D%E4%BD%9C)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# CH05 Date and Time
 
 > `Date`在Java 1.0时难以使用，实例都是可变的，不能处理闰秒问题（官方秒钟偶尔插入1秒来保证计时与地球自转同步）等。它在Java 8得到修复并重新引入
 
