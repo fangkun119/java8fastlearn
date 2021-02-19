@@ -16,7 +16,7 @@
       - [(2) `super::实例方法`](#2-super%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95)
   - [1.5 构造器引用](#15-%E6%9E%84%E9%80%A0%E5%99%A8%E5%BC%95%E7%94%A8)
     - [1.5.1 `Class::new`](#151-classnew)
-    - [1.5.2 Class[]::new(#152-classnew)
+    - [1.5.2 `Class【】::new`](#152-classnew)
     - [1.5.3 附录](#153-%E9%99%84%E5%BD%95)
       - [附录1：解决泛型擦除带来的类型丢失问题](#%E9%99%84%E5%BD%951%E8%A7%A3%E5%86%B3%E6%B3%9B%E5%9E%8B%E6%93%A6%E9%99%A4%E5%B8%A6%E6%9D%A5%E7%9A%84%E7%B1%BB%E5%9E%8B%E4%B8%A2%E5%A4%B1%E9%97%AE%E9%A2%98)
       - [附录2：理解`Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button`](#%E9%99%84%E5%BD%952%E7%90%86%E8%A7%A3streambutton-stream--labelsstreammapbuttonnew-%E7%AD%89%E4%BB%B7%E4%BA%8Ex---new-button)
@@ -203,7 +203,7 @@ Lambda表达式是一段可以被传递的代码，例如
 > Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button
 > ```
 
-### 1.5.2 Class[]::new
+### 1.5.2 `Class[]::new`
 
 > ```java
 > Button[] buttons = stream.toArray(Button[]::new);
