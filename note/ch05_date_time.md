@@ -112,8 +112,9 @@ Instant和Durance都是不可变的，上面的方法都会返回一个新的实
 > // 基准时间：6月1日
 > // 矫正规则：某一天为起点，第1个星期2
 > // 计算结果：6月第1个星期2，另外with方法会返回新的LocalDate对象，不会改变已有的
-> LocalDate firstTuesday = LocalDate.of(2014, 6, 1).with(
->          TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY));
+> LocalDate firstTuesday = LocalDate
+> 						.of(2014, 6, 1)
+> 						.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY));
 > System.out.println("firstTuesday: " + firstTuesday);
 > ~~~
 >
@@ -129,7 +130,7 @@ Instant和Durance都是不可变的，上面的方法都会返回一个新的实
 >
 >@FunctionalInterface
 >public interface TemporalAdjuster {
->    Temporal adjustInto(Temporal temporal);
+>    	Temporal adjustInto(Temporal temporal);
 >}
 >~~~~
 >
@@ -141,13 +142,13 @@ Instant和Durance都是不可变的，上面的方法都会返回一个新的实
 >// 计算结果：从今天开始计算得出的下一个工作日
 >LocalDate today = LocalDate.of(2013, 11, 9); // Saturday
 >TemporalAdjuster NEXT_WORKDAY = w -> {
->    // LocalDate实现了Temporal接口
->    // 将Temporal类型转回LocalDate、以使用LocalDate的API
->    LocalDate result = (LocalDate) w; 
->    do {
->        result = result.plusDays(1);
->    } while (result.getDayOfWeek().getValue() >= 6);
->    return result;
+>    	// LocalDate实现了Temporal接口
+>    	// 将Temporal类型转回LocalDate、以使用LocalDate的API
+>    	LocalDate result = (LocalDate) w; 
+>    	do {
+>     		result = result.plusDays(1);
+>    	} while (result.getDayOfWeek().getValue() >= 6);
+>    	return result;
 >};
 >LocalDate backToWork = today.with(NEXT_WORKDAY);
 >System.out.println("backToWork: " + backToWork);
@@ -221,9 +222,9 @@ Instant和Durance都是不可变的，上面的方法都会返回一个新的实
 > // ZonedDateTime.of(int, int, int, int, int, int, int, ZoneId.of(...))
 > // ZonedDateTime.of(LocalDateTime, LocalDateTime, ZoneId.of(...))
 > ZonedDateTime apollo11launch = ZonedDateTime.of(
->         1969, 7, 16,
->         9, 32, 0, 0,
->          ZoneId.of("America/New_York"));
+>    	1969, 7, 16,
+>    	9, 32, 0, 0,
+>    	ZoneId.of("America/New_York"));
 > System.out.println("apollo11launch: " + apollo11launch);
 > // apollo11launch: 1969-07-16T09:32-04:00[America/New_York]
 > ```

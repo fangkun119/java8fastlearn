@@ -46,30 +46,30 @@
 
 > ```java
 > try {
->     // Scanner类实现了AutoClosable接口
->     // 当抛出异常，或者try块内的代码运行完毕后，都会调用scanner.close()方法来释放资源
->     try (Scanner scanner = new Scanner(Paths.get("/usr/share/dict/words"))) {
->         int count = 0;
->         while (scanner.hasNext() && ++count < 4) {
->            System.out.println(LOG_PREFIX + scanner.next().toLowerCase());
->         }
->         // a
->         // a
->         // aa
->     }
+>    	// Scanner类实现了AutoClosable接口
+>    	// 当抛出异常，或者try块内的代码运行完毕后，都会调用scanner.close()方法来释放资源
+>    	try (Scanner scanner = new Scanner(Paths.get("/usr/share/dict/words"))) {
+>    		int count = 0;
+>    		while (scanner.hasNext() && ++count < 4) {
+>    			System.out.println(LOG_PREFIX + scanner.next().toLowerCase());
+>    		}
+>    		// a
+>    		// a
+>    		// aa
+>    	}
 > 
->     // 可以指定多个资源，如下面的in和out
->     try (
->             Scanner in = new Scanner(Paths.get("not_existed.txt"));
->             PrintWriter out = new PrintWriter("/tmp/out.txt")
->     ) {
->        while (in.hasNext()) {
->           out.println(in.next().toLowerCase());
->        }
->     }
+>    	// 可以指定多个资源，如下面的in和out
+>    	try (
+>    		Scanner in = new Scanner(Paths.get("not_existed.txt"));
+>    		PrintWriter out = new PrintWriter("/tmp/out.txt")
+>     	) {
+>    		while (in.hasNext()) {
+>    			out.println(in.next().toLowerCase());
+>    		}
+>    	}
 > } catch (IOException ex) { // Separate try-with-resources from try/catch
->     System.out.println(LOG_PREFIX + "exception from try-with-resources clause: " + ex);
->     // exception from try-with-resources clause: java.nio.file.NoSuchFileException: not_existed.txt
+>    	System.out.println(LOG_PREFIX + "exception from try-with-resources clause: " + ex);
+>    	// exception from try-with-resources clause: java.nio.file.NoSuchFileException: not_existed.txt
 > }
 > ```
 
@@ -81,7 +81,7 @@
 >
 > (2) 在关闭资源时，又抛出新的异常B
 
-`try-with-resources`的处理方法：
+`try-with-resources`的处理方法
 
 > 会重新抛出异常A，而异常B则由`try-with-resource`类库来捕获并将其标记为”suppressed“，例如下面的例子1
 
@@ -95,28 +95,27 @@
 
 > ```java
 > try {
->     // 测试场景构造
->     // 构造一个内部类，传给Scanner，来让Scanner处理业务逻辑，以及关闭时都会抛出异常
->     try (InputStream in = new InputStream() {
->         public int read() throws IOException {
->             throw new IOException("read failed");
->         }
->         public void close() throws IOException {
->             throw new IOException("close failed");
->         }
->     }) {
->         System.out.println(in.read());
->     }
+>    	// 测试场景构造
+>    	// 构造一个内部类，传给Scanner，来让Scanner处理业务逻辑，以及关闭时都会抛出异常
+>    	try (InputStream in = new InputStream() {
+>    		public int read() throws IOException {
+>    			throw new IOException("read failed");
+>    		}
+>    		public void close() throws IOException {
+>    			throw new IOException("close failed");
+>    		}
+>    	}) {
+>    		System.out.println(in.read());
+>    	}
 > } catch (Exception ex) {
->     System.out.println(LOG_PREFIX + "exception thrown by try-with-resources: " + ex);
->     // 输出
->     // exception thrown by try-with-resources: java.io.IOException: read failed
-> 
->     Throwable[] secondaryExceptions = ex.getSuppressed();
->     System.out.println(LOG_PREFIX + "exception suppressed: " + Arrays.toString(secondaryExceptions));
->     // 输出
->     // exception suppressed: [java.io.IOException: close failed]
-> }
+>    	System.out.println(LOG_PREFIX + "exception thrown by try-with-resources: " + ex);
+>    	// 输出
+>    	// exception thrown by try-with-resources: java.io.IOException: read failed
+> 	Throwable[] secondaryExceptions = ex.getSuppressed();
+>    	System.out.println(LOG_PREFIX + "exception suppressed: " + Arrays.toString(secondaryExceptions));
+>    	// 输出
+>    	// exception suppressed: [java.io.IOException: close failed]
+>    }
 > ```
 
 ### 9.1.3 捕获多个异常：`catch(ExceptionA|ExceptionB e)`
@@ -125,9 +124,9 @@
 >
 > ~~~java
 > try {
->     ...
+>    	...
 > } catch (FileNotFoundException | UnknownHostException ex) {
->     ...
+>    	...
 > }
 > ~~~
 
@@ -393,34 +392,34 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 
 > ```java
 > public boolean equals(Object otherObject) {
->     // 先对顶部的对象进行null值判断、类型判断
->     if (this == otherObject) {
->        return true;
->     }
->     if (otherObject == null || this.getClass() != otherObject.getClass()) {
->        return false;
->     }
->     Person other = (Person) otherObject;
+>    	// 先对顶部的对象进行null值判断、类型判断
+>    	if (this == otherObject) {
+>    		return true;
+>    	}
+>    	if (otherObject == null || this.getClass() != otherObject.getClass()) {
+>    		return false;
+>    	}
+>    	Person other = (Person) otherObject;
 > 
->     // Java 6的老式写法
->     /*
->     boolean isFirstEqual = false;
->     if (null == this.first) {
->         isFirstEqual = (null == other.first);
->     } else {
->         isFirstEqual = this.first.equals(other.first);
->     }
->     boolean isSecondEqual =
->     ...
->     return isFirstEqual && isSecondEqual;
->      */
+>    	// Java 6的老式写法
+>    	/*
+>    	boolean isFirstEqual = false;
+>    	if (null == this.first) {
+>    		isFirstEqual = (null == other.first);
+>    	} else {
+>    		isFirstEqual = this.first.equals(other.first);
+>    	}
+>    	boolean isSecondEqual =
+>    	...
+>    	return isFirstEqual && isSecondEqual;
+>    	*/
 > 
->     // Java 7提供Objects.equals方法，来简化上面代码的代码
->     // 对于Object.equals(a, b)
->     // * a,b都是null时返回true
->     // * 只有a是null时返回false
->     // * 其他情况返回a.equals(b)
->     return Objects.equals(first, other.first) && Objects.equals(last, other.last);
+>    	// Java 7提供Objects.equals方法，来简化上面代码的代码
+>    	// 对于Object.equals(a, b)
+>    	// * a,b都是null时返回true
+>    	// * 只有a是null时返回false
+>    	// * 其他情况返回a.equals(b)
+>    	return Objects.equals(first, other.first) && Objects.equals(last, other.last);
 > }
 > ```
 
@@ -428,9 +427,9 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 
 > ```java
 > public int hashCode() {
->     // Java 7提供方法，
->     // 替代诸如 31*Object.hashCode(first) + Object.hashCode(second)这样的代码
->     return Objects.hash(first, last);
+>    	// Java 7提供方法，
+>    	// 替代诸如 31*Object.hashCode(first) + Object.hashCode(second)这样的代码
+>    	return Objects.hash(first, last);
 > }
 > ```
 
@@ -438,13 +437,13 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 
 > ```java
 > public int compareTo(Point other) {
->     // 使用Java 7提供的方法，可以避免直接相减带来的溢出问题
->     // Integer、Long、Short、Byte、Boolean都提供了各自的静态方法compare
->     int diff = Integer.compare(x, other.x); // No risk of overflow
->     if (diff != 0) {
->         return diff;
->     }
->     return Integer.compare(y, other.y);
+>    	// 使用Java 7提供的方法，可以避免直接相减带来的溢出问题
+>    	// Integer、Long、Short、Byte、Boolean都提供了各自的静态方法compare
+>    	int diff = Integer.compare(x, other.x); // No risk of overflow
+>    	if (diff != 0) {
+>    		return diff;
+>    	}
+>    	return Integer.compare(y, other.y);
 > }
 > ```
 
@@ -464,7 +463,7 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 ### 9.5.1 修复字符串”+123“转换为数字时的问题
 
 > ```java
-> // Java 8修复了形如"+1"的整形数字符串在被parse成整数时的bug
+> // Java 7修复了形如"+1"的整形数字符串在被parse成整数时的bug
 > double   x1 = Double.parseDouble("+1.0");
 > int      n1 = Integer.parseInt("+1");
 > short    s1 = Short.parseShort("+1");
@@ -496,9 +495,9 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 
 > ```java
 > public void process(String directions) {
->     // directions为null时，会抛出NullPointerException并且可以设置错误提示
->     // 相比普通的null值检查，代码简洁并且更容易定位错误
->     this.directions = Objects.requireNonNull(directions, "directions must not be null");
+>    	// directions为null时，会抛出NullPointerException并且可以设置错误提示
+>    	// 相比普通的null值检查，代码简洁并且更容易定位错误
+>    	this.directions = Objects.requireNonNull(directions, "directions must not be null");
 > }
 > // 该方法抛出异常时的输出
 > // java.lang.NullPointerException: directions must not be null
@@ -538,8 +537,8 @@ Java 7引入了一个新的父类异常`ReflectiveOperationException`，只需�
 >
 > ```java
 > try (URLClassLoader loader = new URLClassLoader(urls)) {
->     Class<?> klass = loader.loadClass("org.junit.runner.JUnitCore");
->     System.out.println(klass.getMethod("main", String[].class).invoke(null, (Object) args));
+>    	Class<?> klass = loader.loadClass("org.junit.runner.JUnitCore");
+>    	System.out.println(klass.getMethod("main", String[].class).invoke(null, (Object) args));
 > }
 > // 输出
 > // JUnit version 4.11

@@ -105,7 +105,7 @@
 > // Double    SIZE: 64 BYTES: 8
 > // Float     SIZE: 32 BYTES: 4
 > // Short     SIZE: 16 BYTES: 2
-> // Byte      SIZE: 8 BYTES: 1
+> // Byte      SIZE: 8  BYTES: 1
 > // Character SIZE: 16 BYTES: 2
 > ```
 
@@ -187,8 +187,7 @@
 #### (5) 从BigInteger提取原始类型：`intValueExact`、`longValueExact`、`shortValueExact`、`byteValueExact`
 
 > ```java
-> // 5. BigInteger增加了实例方法(long|int|short|byte)ValueExact四个方法，
-> // 用来返回long、int、short、byte，并且当值不在目标范围内时会抛出一个ArithmeticException异常
+> // 从BigInteger中提取原始类型，超出范围时抛ArithmeticException异常
 > int intExact = new BigInteger("129").intValueExact();       // 129
 > long longExact = new BigInteger("129").longValueExact();    // 129
 > short shortExact = new BigInteger("129").shortValueExact(); // 129
@@ -221,10 +220,10 @@
 > ```java
 > // 方法名后缀`Exact`则暗示该方法比较严格、会检查溢出
 > try {
->     System.out.println(Math.multiplyExact(1000000, 1000000));
+>    	System.out.println(Math.multiplyExact(1000000, 1000000));
 > } catch (ArithmeticException ex) {
->     // 溢出时会抛出ArithmeticException
->     ex.printStackTrace();
+>    	// 溢出时会抛出ArithmeticException
+>    	ex.printStackTrace();
 > }
 > // 输出
 > // java.lang.ArithmeticException: integer overflow
@@ -239,9 +238,9 @@
 > long largerThanIntMax = (long)Integer.MAX_VALUE + 10;
 > System.out.println("largerThanIntMax: " + largerThanIntMax); // 2147483657
 > try {
->     int n = Math.toIntExact(largerThanIntMax);
+>    	int n = Math.toIntExact(largerThanIntMax);
 > } catch (ArithmeticException ex) {
->     ex.printStackTrace();
+>    	ex.printStackTrace();
 > }
 > // java.lang.ArithmeticException: integer overflow
 > //      at java.base/java.lang.Math.toIntExact(Math.java:1080)
@@ -336,7 +335,7 @@
 
 #### (2) 多级比较器：`Comparator.thenComparing(keyExtractor)`
 
-> ```
+> ```java
 > // 多级比较
 > // Comparator.comparing(Function<? super T, ? extends U> keyExtractor)
 > // Comparator.thenComparing(Function<? super T, ? extends U> keyExtractor)
@@ -436,8 +435,8 @@ display(TestData.personArray, 5);
 >                 .lines(Paths.get(BASE_DIR,"StreamsOfLines.java"))
 >                 .onClose(() -> System.out.println("Closing"))
 >                 .filter(s -> s.contains("password"))) {
->     Optional<String> passwordEntry = filteredLines.findFirst();
->     passwordEntry.ifPresent(System.out::println);
+>    	Optional<String> passwordEntry = filteredLines.findFirst();
+>    	passwordEntry.ifPresent(System.out::println);
 > }
 > // 输出
 > // Optional<String> passwordEntry = lines.filter(s -> s.contains("password")).findFirst();
@@ -449,12 +448,12 @@ display(TestData.personArray, 5);
 > ```java
 > URL url = new URL("http://horstmann.com");
 > try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
->     // BufferedReader.lines()：从BufferedReader生成Stream
->     Stream<String> lines = reader.lines();
->     Optional<String> imgEntry = lines
->             .filter(s -> s.contains("<img "))
->             .findFirst();
->     imgEntry.ifPresent(System.out::println);
+>    	// BufferedReader.lines()：从BufferedReader生成Stream
+>    	Stream<String> lines = reader.lines();
+>    	Optional<String> imgEntry = lines
+>    		.filter(s -> s.contains("<img "))
+>    		.findFirst();
+>    	imgEntry.ifPresent(System.out::println);
 > }
 > ```
 
@@ -476,9 +475,9 @@ display(TestData.personArray, 5);
 >             }
 >         }
 > )) {
->     Stream<String> lines = reader.lines();
->     Optional<String> imgEntry = lines.filter(s -> s.contains("<img ")).findFirst();
->     imgEntry.ifPresent(System.out::println);
+>    	Stream<String> lines = reader.lines();
+>    	Optional<String> imgEntry = lines.filter(s -> s.contains("<img ")).findFirst();
+>    	imgEntry.ifPresent(System.out::println);
 > }
 > // 输出：流操作已经将IOException转化为UncheckedIOException抛出了
 > // Exception in thread "main" java.io.UncheckedIOException: java.io.IOException: Simulated exception
@@ -535,7 +534,7 @@ display(TestData.personArray, 5);
 > Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
 > try (Stream<Path> entries = Files.find(Paths.get("./"), depth,
 >         (path, attrs) -> attrs.creationTime().toInstant().compareTo(oneMonthAgo) >= 0)) {
->     entries.limit(5).forEach(System.out::println);
+>    	entries.limit(5).forEach(System.out::println);
 > }
 > // recent files in directories with directory-max-depth 5
 > // .
@@ -575,14 +574,14 @@ display(TestData.personArray, 5);
 > Path encodedPath  = Paths.get("code/ch8/sec05/", "Base64Demo.java.base64");
 > encoder = Base64.getMimeEncoder();
 > try (OutputStream output = Files.newOutputStream(encodedPath)) {
->     Files.copy(originalPath, encoder.wrap(output));
+>    	Files.copy(originalPath, encoder.wrap(output));
 > }
 > 
 > // 解码流：
 > Path decodedPath = Paths.get("code/ch8/sec05/", "Base64Demo.java.decoded");
 > Base64.Decoder decoder = Base64.getMimeDecoder();
 > try (InputStream input = Files.newInputStream(encodedPath)) {
->     Files.copy(decoder.wrap(input), decodedPath, StandardCopyOption.REPLACE_EXISTING);
+>    	Files.copy(decoder.wrap(input), decodedPath, StandardCopyOption.REPLACE_EXISTING);
 > }
 > ```
 
@@ -648,7 +647,7 @@ Java 8之前的注解都是`声明注解`，只能被标注在一个`声明`（�
 > ~~~java
 > @Entithy
 > public class Person {
->     ...
+>    	...
 > }
 > ~~~
 >
@@ -712,7 +711,7 @@ Java 8新增了`类型注解`，可以标注在任何`类型`上，包括
 > 检查一个流是否有null值
 >
 > ~~~java
-> stream.anyMatch(Ojbects::isNull)
+> stream.anyMatch(Object::isNull)
 > ~~~
 >
 > 从一个流中获取所有非null对象
@@ -749,9 +748,10 @@ Java 8新增了`类型注解`，可以标注在任何`类型`上，包括
 #### (2) `Object.requireNonNull`的lambda版本
 
 > ~~~java
-> this.directions = Objects.requireNotNull(inputParameter,
-> 		() -> "inputParameter for " + this.goal + "must not be null"
-> 	)
+> this.directions = Objects.requireNotNull(
+>     inputParameter,
+> 	() -> "inputParameter for " + this.goal + "must not be null"
+> )
 > ~~~
 >
 > * 当`inputParameter`不为null时，赋给`this.directions`
@@ -765,7 +765,7 @@ Java 8新增了`类型注解`，可以标注在任何`类型`上，包括
 Java 7引入了`命名捕获组`，例如下面的`(?<city>)`和`(?<state>)`就包裹了两个命名捕获组的正则表达式
 
 > ~~~java
-> （?<city>[\p{L} ]+),\s*(?<state>[A-Z]{2})
+> Pattern pattern = Pattern.compile("(?<city>[\p{L} ]+),\s*(?<state>[A-Z]{2})")
 > ~~~
 
 Java 8中， `Matcher`类的`start`、`end`和`group`方法可以使用`命名捕获组`的`名称`来获得匹配的字符串
@@ -773,8 +773,8 @@ Java 8中， `Matcher`类的`start`、`end`和`group`方法可以使用`命名�
 > ~~~java
 > Matcher matcher = pattern.matcher(input);
 > if (matcher.matches()) {
->     String city = matcher.group("city"); //"city"是写在正则表达式中的命名组名称
->     ...
+>    	String city = matcher.group("city"); //"city"是写在正则表达式中的命名组名称
+>    	...
 > }
 > ~~~
 
@@ -840,11 +840,11 @@ Java 8中， `Matcher`类的`start`、`end`和`group`方法可以使用`命名�
 
 > (1) `java.sql.Date`、`Time`、`Timestamp`增加支持`LocalDate`、`LocalTime`和`LocalDateTime`的方法
 >
-> (2) `Statement`增加`executeLargeUpdate`方法，支持修改行数超过Integer.MAX_VALUE的更新操作
+> (2) `Statement`增加`,`方法，支持修改行数超过Integer.MAX_VALUE的更新操作
 >
 > (3) `Statement`和`ResultSet`增加泛型方法`getObject(columnStr, class)`方法以及对应的`setObject`方法，例如：
 >
-> ~~~
+> ~~~java
 > URL url = result.getObject("link", URL.class);
 > ~~~
 >

@@ -71,26 +71,25 @@
 > ```java
 > // 定义原子变量
 > public static AtomicLong largest = new AtomicLong();
-> ```
->
-> ```java
 > // 在多线程中操作AtomicLong
-> // Max.max不是原子操作，因此会导致"Error—race condition" !
+>// Max.max不是原子操作，因此会导致"Error—race condition" !
 > largest.set(Math.max(largest.get(), observed));
 > ```
->
+> 
 > 完整代码：[../code/ch6/sec01/AtomicUpdates.java](../code/ch6/sec01/AtomicUpdates.java)
 
 #### 正确用法
 
 > ```java
+> // 定义原子变量
+> public static AtomicLong largest = new AtomicLong();
 > // 在多线程中操作AtomicLong
 > // 正确的使用方法，使用CAS来进行并发检查
 > long oldValue, newValue;
 > do {
->     oldValue = largest.get();
->     newValue = Math.max(oldValue, observed);
->     // 如果执行CAS时largest的值变了导致结果会不准确，CAS会返回false并在下一轮循环中重试
+> 	oldValue = largest.get();
+> 	newValue = Math.max(oldValue, observed);
+> 	// 如果执行CAS时largest的值变了导致结果会不准确，CAS会返回false并在下一轮循环中重试
 > } while (!largest.compareAndSet(oldValue, newValue));
 > ```
 >
@@ -129,7 +128,7 @@
 
 使用乐观锁的问题是，当大量线程访问同一个原子变量时，太多重试导致性能严重下降，而下面的`LongAdder`和`LongAccumulator`就是用来解决这个问题的
 
-#### (2) 乐观锁分组封装
+#### (2) 用于减少多线程互斥的乐观锁分组封装
 
 ##### `LongAdder` / `DoubleAdder`
 
@@ -171,7 +170,7 @@
 > LongAccumulator accumulator = new LongAccumulator(Long::sum, 0);
 > // (2) 启动100个线程，并返回计算耗时
 > elapsedTime = run(THREADS, ITERATIONS, () -> {
->    accumulator.accumulate(1); // 让LongAdder执行1000000次加1操作
+>    	accumulator.accumulate(1); // 让LongAdder执行1000000次加1操作
 > });
 > // (3) 输出结果
 > System.out.println(accumulator.get());        // 累加和
@@ -183,7 +182,7 @@
 > 
 > @FunctionalInterface
 > public interface LongBinaryOperator {
->     /**
+>     	/**
 >      * Applies this operator to the given operands.
 >      *
 >      * @param left the first operand
@@ -200,7 +199,7 @@
 
 读数据的线程
 
-> 先尝试乐观度、调用`tryOptimisticRead`方法并读取数据、该方法会反回一个`stamp`来告知读取是否有效
+> 先尝试乐观读、调用`tryOptimisticRead`方法并读取数据、该方法会反回一个`stamp`来告知读取是否有效
 >
 > * 如果无效：说明读数据期间有一个线程（获得写锁并）更新了数据，需要再获取一把读锁重新读取数据
 > * 如果有效：使用读到的数据
@@ -213,19 +212,19 @@
 >
 > ```java
 > public int size() {
->     // 先尝试乐观读
->     long stamp = lock.tryOptimisticRead();
->     int currentSize = size;
->     // 如果乐观读失败（此时有个线程获得了写锁并更新了数据），则只能拿一把读锁并重新读取数据
->     if (!lock.validate(stamp)) { // Someone else had a write lock
->         // 获取读锁
->         stamp = lock.readLock(); // Get a pessimistic lock
->         // 读数据
->         currentSize = size;
->         // 解锁
->         lock.unlockRead(stamp);
->     }
->     return currentSize;
+> 	// 先尝试乐观读
+> 	long stamp = lock.tryOptimisticRead();
+> 	int currentSize = size;
+> 	// 如果乐观读失败（此时有个线程获得了写锁并更新了数据），则只能拿一把读锁并重新读取数据
+> 	if (!lock.validate(stamp)) { // Someone else had a write lock
+> 		// 获取读锁
+> 		stamp = lock.readLock(); // Get a pessimistic lock
+> 		// 读数据
+> 		currentSize = size;
+> 		// 解锁
+> 		lock.unlockRead(stamp);
+> 	}
+> 	return currentSize;
 > }
 > ```
 >
@@ -233,17 +232,20 @@
 >
 > ```java
 > public void add(Object obj) {
->     // 获取写锁并更新数据
->     long stamp = lock.writeLock();
->     try {
->         if (size == elements.length)
->             elements = Arrays.copyOf(elements, 2 * size);
->         elements[size] = obj;
->         size++;
->     } finally {
->         // 解锁
->         lock.unlockWrite(stamp);
->     }
+> 	// 获取写锁并更新数据
+> 	long stamp = lock.writeLock();
+> 	try {
+> 		if (size == elements.length) {
+> 			elements = Arrays.copyOf(elements, 2 * size);
+> 		}
+> 		elements[size] = obj;
+> 		size++;
+> 	} finally {
+> 		// 解锁
+> 		lock.unlockWrite(stamp);
+> 	}
+>     ...
+> }
 > ```
 
 ## 6.2 ConcurrentHashMap改进
@@ -274,8 +276,8 @@
 
 > ```java
 > do {
->    oldValue = concurrentHashMap.get(word);
->    newValue = oldValue == null ? 1 : oldValue + 1;
+>    	oldValue = concurrentHashMap.get(word);
+>    	newValue = oldValue == null ? 1 : oldValue + 1;
 > } while (!concurrentHashMap.replace(word, oldValue, newValue));
 > ```
 
@@ -304,9 +306,9 @@
 > ```java
 > // 与compute类似，但是lambda表达式只需要提供更新操作，而value初始值可以通过另一个参数传入
 > concurrentHashMap.merge(
->     word,  // key
->     1L,    // value缺失时的hash初始值
->     (existingValue, newValue2) -> existingValue + newValue2 // value更新操作
+>    	word,  // key
+>    	1L,    // value缺失时的hash初始值
+>    	(existingValue, newValue2) -> existingValue + newValue2 // value更新操作
 > );
 > concurrentHashMap.merge(word, 1L, Long::sum);
 > ```

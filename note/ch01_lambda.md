@@ -65,7 +65,7 @@ Lambda表达式是一段可以被传递的代码，例如
 > 
 > // 以1.1中的Worker类为例，可以替换成形式如下的lambda表达式
 > Runnable runner = () -> {
->     for (int i = 0; i < 1000; i++) doWork();
+>    	for (int i = 0; i < 1000; i++) doWork();
 > };
 > 
 > // 以1.1中的`EventHandler<ActionEvent>的内部匿名子类`为例，可以替换成如下lambda表达式
@@ -86,7 +86,7 @@ Lambda表达式是一段可以被传递的代码，例如
 > ~~~java
 > @FunctionalInterface
 > public interface Comparator<T> {
->     int compare(T o1, T o2);
+>    	int compare(T o1, T o2);
 > }
 > ~~~
 >
@@ -99,9 +99,8 @@ Lambda表达式是一段可以被传递的代码，例如
 使用时可以直接传入lambda表达式
 
 > ```java
-> Arrays.sort(strings, 
->    (first, second) -> Integer.compare(first.length(), second.length()));
-> ```
+> Arrays.sort(strings, (first, second) -> Integer.compare(first.length(), second.length()));
+>    ```
 
 更多的例子：
 
@@ -113,12 +112,12 @@ Lambda表达式是一段可以被传递的代码，例如
 >
 > ```java
 > Runnable sleeper2 = () -> { 
->    System.out.println("Zzz"); 
->    try {
->       Thread.sleep(1000);
->    } catch (InterruptedException ex) {
->       Thread.currentThread().interrupt();
->    }
+>    	System.out.println("Zzz"); 
+>    	try {
+>    		Thread.sleep(1000);
+>    	} catch (InterruptedException ex) {
+>    		Thread.currentThread().interrupt();
+>    	}
 > };
 > Callable<Void> sleeper3 = () -> { System.out.println("Zzz"); Thread.sleep(1000); return null; };
 > ```
@@ -154,7 +153,7 @@ Lambda表达式是一段可以被传递的代码，例如
 > ```java
 > @FunctionalInterface
 > public interface Comparator<T> {
->     int compare(T o1, T o2);
+>    	int compare(T o1, T o2);
 > }
 > ```
 
@@ -179,8 +178,7 @@ Lambda表达式是一段可以被传递的代码，例如
 #### (1) `this::实例方法`
 
 > ```java
-> Thread t = new Thread(super::greet); // x -> super.great(x)
-> t.start();
+> list.forEach(this::process); // 等价于 x -> this.process(x)
 > ```
 
 #### (2) `super::实例方法`
@@ -200,7 +198,7 @@ Lambda表达式是一段可以被传递的代码，例如
 
 > ```java
 > List<String> labels = Arrays.asList("Ok", "Cancel", "Yes", "No", "Maybe");
-> Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button
+> Stream<Button> stream = labels.stream().map(Button::new); //等价于x -> new Button(x)
 > ```
 
 ### 1.5.2 `Class[]::new`
@@ -299,9 +297,9 @@ Lambda表达式是一段可以被传递的代码，例如
 >
 > ```java
 > interface Person {
->    long getId();
->    // 接口默认函数getName
->    default String getName() { return "Person " + getId(); }
+>    	long getId();
+>    	// 接口默认函数getName
+>    	default String getName() { return "Person " + getId(); }
 > }
 > ```
 
@@ -325,18 +323,18 @@ Lambda表达式是一段可以被传递的代码，例如
 > import ...
 > 
 > public interface Iterable<T> {
->     Iterator<T> iterator();
+>    	Iterator<T> iterator();
 > 
->     default void forEach(Consumer<? super T> action) {
->         Objects.requireNonNull(action);
->         for (T t : this) {
->             action.accept(t);
->         }
->     }
+>    	default void forEach(Consumer<? super T> action) {
+>    		Objects.requireNonNull(action);
+>    		for (T t : this) {
+>    			action.accept(t);
+>    		}
+>    	}
 > 
->     default Spliterator<T> spliterator() {
->         return Spliterators.spliteratorUnknownSize(iterator(), 0);
->     }
+>    	default Spliterator<T> spliterator() {
+>    		return Spliterators.spliteratorUnknownSize(iterator(), 0);
+>    	}
 > }
 > ```
 
@@ -356,13 +354,13 @@ Lambda表达式是一段可以被传递的代码，例如
 >
 > ```java
 > class Student implements Person, Persistent {
->    // 接口Person, Persistent都声明了`String getName()`方法，且其中一个是默认方法
->    public String getName() {
->       // 必须手动指定使用哪个版本，
->    	  // 例如下面代码，使用接口Person的版本
->       return Person.super.getName();
->    }
->    ...
+>    	// 接口Person, Persistent都声明了`String getName()`方法，且其中一个是默认方法
+>    	public String getName() {
+>    		// 必须手动指定使用哪个版本，
+>    		// 例如下面代码，使用接口Person的版本
+>    		return Person.super.getName();
+>    	}
+>    	...
 > }
 > ```
 
@@ -374,22 +372,21 @@ Java 8容许为接口添加静态方法
 
 > 例如下面`java.util.Comparator<>`接口中提供的一组方法
 >
-> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_interface_static_method.jpg)
+> <div align="left"><img src="https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_interface_static_method.jpg" width="700" /></div>
 >
 > ```java
 > package java.util;
 > 
 > @FunctionalInterface
 > public interface Comparator<T> {
->     ...
+> 	...
 > 
->     public static <T> Comparator<T> comparingInt(ToIntFunction<? super T> keyExtractor) {
->         Objects.requireNonNull(keyExtractor);
->         return (Comparator<T> & Serializable)
->             (c1, c2) -> Integer.compare(keyExtractor.applyAsInt(c1), keyExtractor.applyAsInt(c2));
->     }
->     
->     ...
+> 	public static <T> Comparator<T> comparingInt(ToIntFunction<? super T> keyExtractor) {
+> 		Objects.requireNonNull(keyExtractor);
+> 		return (Comparator<T> & Serializable)(c1, c2) -> Integer.compare(keyExtractor.applyAsInt(c1), keyExtractor.applyAsInt(c2));
+> 	}
+> 
+> 	...
 > }
 > ```
 
@@ -404,20 +401,26 @@ Java 8容许为接口添加静态方法
 > 例如：`java.util.Comparator`提供了接口静态方法`comparing`
 >
 > ```java
-> public static <T, U extends Comparable<? super U>> Comparator<T> comparing(
->         Function<? super T, ? extends U> keyExtractor)
-> {
->     Objects.requireNonNull(keyExtractor);
->     return (Comparator<T> & Serializable)
->         (c1, c2) -> keyExtractor.apply(c1).compareTo(keyExtractor.apply(c2));
+> package java.util;
+> 
+> @FunctionalInterface
+> public interface Comparator<T> {
+> 	...
+> 
+> 	public static <T, U extends Comparable<? super U>> Comparator<T> comparing(Function<? super T, ? extends U> keyExtractor) {
+> 		Objects.requireNonNull(keyExtractor);
+> 		return (Comparator<T> & Serializable)(c1, c2) -> keyExtractor.apply(c1).compareTo(keyExtractor.apply(c2));
+> 	}
+> 
+> 	...
 > }
 > ```
 >
 > ```java
 > @FunctionalInterface
 > public interface Function<T, R> {
->     R apply(T t);
->     ...
+> 	R apply(T t);
+> 	...
 > }
 > ```
 >

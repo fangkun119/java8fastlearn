@@ -62,26 +62,25 @@
 > import java.util.logging.*;
 > 
 > public class Logging {
->    public static void info(
->            Logger logger, 
->        	   Supplier<String> message /*不传入String而是传入lambda表达式*/
->    ) {
->       if (logger.isLoggable(Level.INFO))
->          logger.info(message.get());
->    }
+>     // 不传入String而是通过Supplier传入lambda表达式
+> 	public static void info(Logger logger, Supplier<String> message) {
+> 		if (logger.isLoggable(Level.INFO)) {
+> 			logger.info(message.get());
+> 		}
+> 	}
 > 
->    public static void main(String[] args) {
->       double x = 3;
->       double y = 4;
->       info(Logger.getGlobal(), () -> "x: " + x + ", y: " + y);
->       // 信息: x: 3.0, y: 4.0
->    }
+> 	public static void main(String[] args) {
+> 		double x = 3;
+> 		double y = 4;
+> 		info(Logger.getGlobal(), () -> "x: " + x + ", y: " + y);
+> 		// 信息: x: 3.0, y: 4.0
+> 	}
 > }
 > ```
->
-> 完整代码：[../code/ch3/sec01/Logging.java](../code/ch3/sec01/Logging.java)
+> 
+>完整代码：[../code/ch3/sec01/Logging.java](../code/ch3/sec01/Logging.java)
 
-### 3.2.2 API 
+### 3.1.2 API 
 
 #### (1) `Supplier<T>`
 
@@ -93,9 +92,9 @@
 > }
 > ```
 
-## 3.3 理解lambda作为参数时的传参过程
+## 3.2 理解lambda作为参数时的传参过程
 
-### 3.3.1 内容
+### 3.2.1 内容
 
 例子：[../code/ch3/sec02/Parameters.java](../code/ch3/sec02/Parameters.java)
 
@@ -103,28 +102,28 @@
 >
 > ```java
 > public class Parameters {
->    public static void main(String[] args) {
->       // IntConsumer
->       repeat(10, i  -> System.out.println("Countdown: " + (9 - i)));
->       // Runnable
->       repeat(10, () -> System.out.println("Hello, World!"));
->    }
+>    	public static void main(String[] args) {
+>    		// IntConsumer
+>    		repeat(10, i  -> System.out.println("Countdown: " + (9 - i)));
+>    		// Runnable
+>    		repeat(10, () -> System.out.println("Hello, World!"));
+>    	}
 > 
->    public static void repeat(int n, IntConsumer action) {
->       for (int i = 0; i < n; i++) {
->          action.accept(i);
->       }
->    }
+>    	public static void repeat(int n, IntConsumer action) {
+>    		for (int i = 0; i < n; i++) {
+>    			action.accept(i);
+>    		}
+>    	}
 > 
->    public static void repeat(int n, Runnable action) {
->       for (int i = 0; i < n; i++) {
->          action.run();
->       }
->    }
+>    	public static void repeat(int n, Runnable action) {
+>    		for (int i = 0; i < n; i++) {
+>    			action.run();
+>    		}
+>    	}
 > }
 > ```
 
-### 3.3.2 API
+### 3.2.2 API
 
 #### (1) `IntConsumer`
 
@@ -134,13 +133,12 @@
 > 
 > @FunctionalInterface
 > public interface IntConsumer {
->        void accept(int value);
->     
->        default IntConsumer andThen(IntConsumer after) {
->            Objects.requireNonNull(after);
->            return (int t) -> { accept(t); after.accept(t); };
->        }
-> }
+>    	void accept(int value);
+>     	default IntConsumer andThen(IntConsumer after) {
+>    		Objects.requireNonNull(after);
+>    		return (int t) -> { accept(t); after.accept(t); };
+>    	}
+>    }
 > ```
 
 #### (2) `Runnable`
@@ -150,7 +148,7 @@
 > 
 > @FunctionalInterface
 > public interface Runnable {
->        public abstract void run();
+>    	public abstract void run();
 > }
 > ```
 
@@ -171,7 +169,7 @@
 > ```java
 > @FunctionalInterface
 > interface ColorTransformer {
-> Color apply(int x, int y, Color colorAtXY);
+> 	Color apply(int x, int y, Color colorAtXY);
 > }
 > ```
 >
@@ -179,16 +177,16 @@
 >
 > ```java
 > public static Image transform(Image in, ColorTransformer f /*自定义函数式接口*/ ) {
->     int width = (int) in.getWidth();
->     int height = (int) in.getHeight();
->     WritableImage out = new WritableImage(width, height);
->     for (int x = 0; x < width; x++) {
->        for (int y = 0; y < height; y++) {
->           // 调用函数式接口的apply方法
->           out.getPixelWriter().setColor(x, y, f.apply(x, y, in.getPixelReader().getColor(x, y)));
->        }
->     }
->     return out;
+>    	int width = (int) in.getWidth();
+>    	int height = (int) in.getHeight();
+>    	WritableImage out = new WritableImage(width, height);
+>    	for (int x = 0; x < width; x++) {
+>    		for (int y = 0; y < height; y++) {
+>    			// 调用函数式接口的apply方法
+>    			out.getPixelWriter().setColor(x, y, f.apply(x, y, in.getPixelReader().getColor(x, y)));
+>    		}
+>    	}
+>    	return out;
 > }
 > ```
 >
@@ -212,33 +210,32 @@
 > 
 > @FunctionalInterface
 > public interface Predicate<T> {
->     boolean test(T t);
+>    	boolean test(T t);
 > 
->     default Predicate<T> and(Predicate<? super T> other) {
->         Objects.requireNonNull(other);
->         return (t) -> test(t) && other.test(t);
->     }
+>    	default Predicate<T> and(Predicate<? super T> other) {
+>    		Objects.requireNonNull(other);
+>    		return (t) -> test(t) && other.test(t);
+>    	}
 > 
->     default Predicate<T> negate() {
->         return (t) -> !test(t);
->     }
+>    	default Predicate<T> negate() {
+>    		return (t) -> !test(t);
+>    	}
 > 
->     default Predicate<T> or(Predicate<? super T> other) {
->         Objects.requireNonNull(other);
->         return (t) -> test(t) || other.test(t);
->     }
+>    	default Predicate<T> or(Predicate<? super T> other) {
+>    		Objects.requireNonNull(other);
+>    		return (t) -> test(t) || other.test(t);
+>    	}
 > 
->     static <T> Predicate<T> isEqual(Object targetRef) {
->         return (null == targetRef)
->              ? Objects::isNull
->              : object -> targetRef.equals(object);
->     }
-> }
+>    	static <T> Predicate<T> isEqual(Object targetRef) {
+>    		return (null == targetRef)
+>    			? Objects::isNull : object -> targetRef.equals(object);
+>    	}
+>    }
 > ```
->
-> 比如如下的代码
->
-> ~~~java
+> 
+>比如如下的代码
+> 
+>~~~java
 > Predicate.isEqual(a).or(Predicate.isEqual(b))
 > ~~~
 
@@ -306,7 +303,7 @@
 >
 > ```java
 > public static UnaryOperator<Color> brighten(double factor) {
->     // lambda表达式会编译成一个UnaryOperator<Color>对象返回
+>    	// lambda表达式会编译成一个UnaryOperator<Color>对象返回
 >        return c -> c.deriveColor(0, 1, factor, 1); 
 >    }
 > ```
@@ -328,31 +325,30 @@
 >
 > ```java
 > public static Image transform(Image in, UnaryOperator<Color> f /*java自带的函数式接口*/) {
->     int width = (int) in.getWidth();
->     int height = (int) in.getHeight();
->     WritableImage out = new WritableImage(width, height);
->     for (int x = 0; x < width; x++) {
->         for (int y = 0; y < height; y++) {
->            // 调用函数式接口的apply方法
->            out.getPixelWriter().setColor(x, y, f.apply(in.getPixelReader().getColor(x, y)));
->         }
->     }
->     return out;
+>    	int width = (int) in.getWidth();
+>    	int height = (int) in.getHeight();
+>    	WritableImage out = new WritableImage(width, height);
+>    	for (int x = 0; x < width; x++) {
+>    		for (int y = 0; y < height; y++) {
+>    			// 调用函数式接口的apply方法
+>    			out.getPixelWriter().setColor(x, y, f.apply(in.getPixelReader().getColor(x, y)));
+>    		}
+>    	}
+>    	return out;
 > }
 > ```
 >
 > 将两个`函数`（函数式接口实现对象、lambda表达式）组合成一个的代码
 >
 > ```java
-> public static <T> UnaryOperator<T> compose(
->         UnaryOperator<T> op1, UnaryOperator<T> op2) {
->     return t -> op2.apply(op1.apply(t));
-> }
+> public static <T> UnaryOperator<T> compose(UnaryOperator<T> op1, UnaryOperator<T> op2) {
+>    	return t -> op2.apply(op1.apply(t));
+>    }
 > ```
->
-> 调用该`compose`方法的代码
->
-> ```java
+> 
+>调用该`compose`方法的代码
+> 
+>```java
 > Image image3 = transform(image, compose(Color::brighter, Color::grayscale));
 > ```
 
@@ -370,39 +366,39 @@
 >
 > ```java
 > class LatentImage {
->     private Image in;
->     // 存储加入的函数
->     private List<UnaryOperator<Color>> pendingOperations;
+>    	private Image in;
+>    	// 存储加入的函数
+>    	private List<UnaryOperator<Color>> pendingOperations;
 > 
->     public static LatentImage from(Image in) {
->         LatentImage result = new LatentImage();
->         result.in = in;
->         result.pendingOperations = new ArrayList<>();
->         return result;
->     }
+>    	public static LatentImage from(Image in) {
+>    		LatentImage result = new LatentImage();
+>    		result.in = in;
+>    		result.pendingOperations = new ArrayList<>();
+>    		return result;
+>    	}
 > 
->     // 加入函数
->     LatentImage transform(UnaryOperator<Color> f) {
->         pendingOperations.add(f);
->         return this;
->     }
+>    	// 加入函数
+>    	LatentImage transform(UnaryOperator<Color> f) {
+>    		pendingOperations.add(f);
+>    		return this;
+>    	}
 > 
->     public Image toImage() {
->         int width = (int) in.getWidth();
->         int height = (int) in.getHeight();
->         WritableImage out = new WritableImage(width, height);
->         for (int x = 0; x < width; x++) {
->             for (int y = 0; y < height; y++) {
->                 Color c = in.getPixelReader().getColor(x, y);
->                 // 依次调用先前加入的所有函数
->                 for (UnaryOperator<Color> f : pendingOperations) {
->                    c = f.apply(c);
->                 }
->                 out.getPixelWriter().setColor(x, y, c);
->             }
->         }
->         return out;
->     }
+>    	public Image toImage() {
+>    		int width = (int) in.getWidth();
+>    		int height = (int) in.getHeight();
+>    		WritableImage out = new WritableImage(width, height);
+>    		for (int x = 0; x < width; x++) {
+>    			for (int y = 0; y < height; y++) {
+>    				Color c = in.getPixelReader().getColor(x, y);
+>    				// 依次调用先前加入的所有函数
+>    				for (UnaryOperator<Color> f : pendingOperations) {
+>    					c = f.apply(c);
+>    				}
+>    				out.getPixelWriter().setColor(x, y, c);
+>    			}
+>    		}
+>    		return out;
+>    	}
 > }
 > ```
 >
@@ -429,34 +425,34 @@
 >
 > ```java
 > public static Color[][] parallelTransform(Color[][] in, UnaryOperator<Color> f) {
->     int n = Runtime.getRuntime().availableProcessors();
->     int height = in.length;
->     int width = in[0].length;
->     Color[][] out = new Color[height][width];
->     try {
->         // 初始化线程池
->         ExecutorService pool = Executors.newCachedThreadPool();
->         for (int i = 0; i < n; i++) {
->             int fromY = i * height / n;
->             int toY   = (i + 1) * height / n;
->             // 线程池
->             pool.submit(() -> {
->                 System.out.printf("%s %d...%d\n", Thread.currentThread(), fromY, toY - 1);
->                 for (int x = 0; x < width; x++) {
->                     for (int y = fromY; y < toY; y++) {
->                         // 执行 UnaryOperator<Color> f
->                         out[y][x] = f.apply(in[y][x]);
->                     }
->                 }
->             });
->         }
->         // 停止新的线程提交，等待已有线程和运行完毕（超时时间1小时）
->         pool.shutdown();
->         pool.awaitTermination(1, TimeUnit.HOURS);
->     } catch (InterruptedException ex) {
->         ex.printStackTrace();
->     }
->     return out;
+>    	int n = Runtime.getRuntime().availableProcessors();
+>    	int height = in.length;
+>    	int width = in[0].length;
+>    	Color[][] out = new Color[height][width];
+>    	try {
+>    		// 初始化线程池
+>    		ExecutorService pool = Executors.newCachedThreadPool();
+>    		for (int i = 0; i < n; i++) {
+>    			int fromY = i * height / n;
+>    			int toY   = (i + 1) * height / n;
+>    			// 线程池
+>    			pool.submit(() -> {
+>    				System.out.printf("%s %d...%d\n", Thread.currentThread(), fromY, toY - 1);
+>    				for (int x = 0; x < width; x++) {
+>    					for (int y = fromY; y < toY; y++) {
+>    						// 执行 UnaryOperator<Color> f
+>    						out[y][x] = f.apply(in[y][x]);
+>    					}
+>    				}
+>    			});
+>    		}
+>    		// 停止新的线程提交，等待已有线程和运行完毕（超时时间1小时）
+>    		pool.shutdown();
+>    		pool.awaitTermination(1, TimeUnit.HOURS);
+>    	} catch (InterruptedException ex) {
+>    		ex.printStackTrace();
+>    	}
+>    	return out;
 > }
 > ```
 >
@@ -481,19 +477,19 @@
 >
 > ~~~java
 > public static void doInOrder(Runnable first, Runnable second) {
->     first.run();
->     second.run();
+>    	first.run();
+>    	second.run();
 > }
 > public static void main() {
->     try {
->         doInOrder(
->             () -> System.out.println(args[0]),   // 会抛异常
->             () -> System.out.println("won't be executed")
->         );
->     } catch (Exception e) {
->         System.out.println("exception: " + e);
->     }
->     // 输出： exception: java.lang.ArrayIndexOutOfBoundsException: 0
+>    	try {
+>    		doInOrder(
+>    			() -> System.out.println(args[0]),   // 会抛异常
+>    			() -> System.out.println("won't be executed")
+>    		);
+>    	} catch (Exception e) {
+>    		System.out.println("exception: " + e);
+>    	}
+>    	// 输出： exception: java.lang.ArrayIndexOutOfBoundsException: 0
 > }
 > ~~~
 
@@ -509,37 +505,36 @@
 
 解决方法是：把处理线程的逻辑、也用lambda表达式传给API
 
-下面是例子，完整代码见：[../code/ch3/sec08/ExceptionDemo.java](../code/ch3/sec08/ExceptionDemo.java)
+下面解决方法的代码，完整版本见“[../code/ch3/sec08/ExceptionDemo.java](../code/ch3/sec08/ExceptionDemo.java)”
 
 ##### 例子1：通过lambda传入异常处理函数
 
 > 异步API
 >
 > ```java
-> public static void doInOrderAsync1(
->         Runnable first, Runnable second, Consumer<Throwable> handler) {
->     Thread t = new Thread() {
->         public void run() {
->             try {
->                 first.run();
->                 second.run();
->             } catch (Throwable t) {
->                 handler.accept(t); // 调用异常处理函数
->             }
->         }
->     };
->     t.start();
-> }
+> public static void doInOrderAsync1(Runnable first, Runnable second, Consumer<Throwable> handler) {
+>    	Thread t = new Thread() {
+>    		public void run() {
+>    			try {
+>    				first.run();
+>    				second.run();
+>    			} catch (Throwable t) {
+>    				handler.accept(t); // 调用异常处理函数
+>    			}
+>    		}
+>    	};
+>    	t.start();
+>    }
 > ```
->
-> 使用异步API的代码
->
-> ```java
+> 
+>使用异步API的代码
+> 
+>```java
 > doInOrderAsync1(
->     ()  -> System.out.println(args[0]),          // 会抛异常
->     ()  -> System.out.println("won't be executed") ,
->     (e) -> System.out.println("exception: " + e) // Exception Handler
-> );
+> 	()  -> System.out.println(args[0]),          // 会抛异常
+>    	()  -> System.out.println("won't be executed") ,
+>    	(e) -> System.out.println("exception: " + e) // Exception Handler
+>    );
 > // 输出：exception: java.lang.ArrayIndexOutOfBoundsException: 0
 > ```
 
@@ -548,31 +543,30 @@
 > 异步API
 >
 > ```java
-> public static <T> void doInOrderAsync2(
->         Supplier<T> first, Consumer<T> second, Consumer<Throwable> handler) {
->     Thread t = new Thread() {
->         public void run() {
->             try {
->                 // first的输出作为second的输入
->                 T firstRet = first.get(); 
->                 second.accept(firstRet); 
->             } catch (Throwable e) {
->                 handler.accept(e); // 调用异常处理函数
->             }
->         }
->     };
->     t.start();
-> }
+> public static <T> void doInOrderAsync2(Supplier<T> first, Consumer<T> second, Consumer<Throwable> handler) {
+>    	Thread t = new Thread() {
+>    		public void run() {
+>    			try {
+>    				// first的输出作为second的输入
+>    				T firstRet = first.get(); 
+>    				second.accept(firstRet); 
+>    			} catch (Throwable e) {
+>    				handler.accept(e); // 调用异常处理函数
+>    			}
+>    		}
+>    	};
+>    	t.start();
+>    }
 > ```
->
-> 使用异步API的代码
->
-> ```java
+> 
+>使用异步API的代码
+> 
+>```java
 > doInOrderAsync2(
->     ()  -> args[0],                              // 会抛异常
->     (r) -> System.out.println(r) ,
->     (e) -> System.out.println("exception: " + e) // Exception Handler
-> );
+> 	()  -> args[0],                              // 会抛异常
+>    	(r) -> System.out.println(r) ,
+>    	(e) -> System.out.println("exception: " + e) // Exception Handler
+>    );
 > // 输出：exception: java.lang.ArrayIndexOutOfBoundsException: 0
 > ```
 
@@ -581,34 +575,32 @@
 > 异步API
 >
 > ```java
-> public static <T> void doInOrderAsync3 (
->         Supplier<T> first, BiConsumer<T, Throwable> second) {
->     Thread t = new Thread() {
->         public void run() {
->             T firstRet = null;
->             Throwable exception = null;
->             try {
->                 firstRet = first.get();
->             } catch (Throwable e) {
->                 exception = e;
->             } finally {
->                 second.accept(firstRet, exception);
->             }
->         }
->     };
->     t.start();
-> }
+> public static <T> void doInOrderAsync3 (Supplier<T> first, BiConsumer<T, Throwable> second) {
+>    	Thread t = new Thread() {
+>    		public void run() {
+>    			T firstRet = null;
+>    			Throwable exception = null;
+>    			try {
+>    				firstRet = first.get();
+>    			} catch (Throwable e) {
+>    				exception = e;
+>    			} finally {
+>    				second.accept(firstRet, exception);
+>    			}
+>    		}
+>    	};
+>    	t.start();
+>    }
 > ```
->
-> 使用异步API的代码
->
-> ```java
+> 
+>使用异步API的代码
+> 
+>```java
 > doInOrderAsync3(
->         () -> args[0],                           // 会抛异常
->         (result, exception) -> System.out.println(
->                 String.format("result %s; exception: %s", result, exception))
-> );
-> // 输出：result null; exception: java.lang.ArrayIndexOutOfBoundsException: 0
+>      () -> args[0],                           // 会抛异常
+>         (result, exception) -> System.out.println(String.format("result %s; exception: %s", result, exception))
+>    );
+>    // 输出：result null; exception: java.lang.ArrayIndexOutOfBoundsException: 0
 > ```
 
 #### (2) 处理`函数式接口`的异常抛出声明与lambda表达式不一致的问题
@@ -633,7 +625,7 @@
 > 
 > @FunctionalInterface
 > public interface Supplier<T> {
->     T get(); // 没有异常抛出声明
+>    	T get(); // 没有异常抛出声明
 > }
 > ```
 >
@@ -642,7 +634,7 @@
 > 
 > @FunctionalInterface
 > public interface Callable<V> {
->     V call() throws Exception;  // 有异常抛出声明
+>    	V call() throws Exception;  // 有异常抛出声明
 > }
 > ~~~
 
@@ -652,17 +644,17 @@
 > // 将会抛出checked exception的Callable<T>
 > // 转换为不会抛checked exception的Supplier<T>，它只会抛un-checked exception
 > public static <T> Supplier<T> unchecked(Callable<T> f) {
->     return () -> {
->         try {
->             // 调用传入的会抛checked Exception的函数
->             return f.call();
->         } catch (Exception e) {
->             // 将checked exception转换成un-checked exception后抛出
->             throw new RuntimeException(e);
->         } catch (Throwable t) {
->             throw t;
->         }
->     };
+>    	return () -> {
+>    		try {
+>    			// 调用传入的会抛checked Exception的函数
+>    			return f.call();
+>    		} catch (Exception e) {
+>    			// 将checked exception转换成un-checked exception后抛出
+>    			throw new RuntimeException(e);
+>    		} catch (Throwable t) {
+>    			throw t;
+>    		}
+>    	};
 > }
 > ```
 >
@@ -696,7 +688,7 @@
 >
 > 传入`T[]`作为参数，在方法内部使用反射，得到类型`T`来创建`T[]`，例如
 >
-> ~~~
+> ~~~java
 > String[] strArray = strList.toArray(new String[0]);
 > ~~~
 
@@ -740,15 +732,15 @@
 >
 > ~~~java
 > public interface Stream<T> extends BaseStream<T, Stream<T>> {
->     // 返回值”? extends R”：后面的代码可以以类型R读取该返回值，返回的都是R或者它的子类
+> 	// 返回值”? extends R”：后面的代码可以以类型R读取该返回值，返回的都是R或者它的子类
 > 	// 参数“? super T”：对处理T的函数的要求，如果它能处理任何基类，那么它也能处理T
->     <R> Stream<R> map(Function<? super T, ? extends R> mapper);
->     
->     // 参数"? super T"：
->     // * 对处理T的函数的要求，如果它能处理任何基类，那么它也能处理T
->     // * 例如可以传Consumer<Object>，这个函数连Object都可以处理，那么它一定可以处理类型T
->     void forEach(Consumer<? super T> action);
->     ...
+> 	<R> Stream<R> map(Function<? super T, ? extends R> mapper);
+> 
+> 	// 参数"? super T"：
+> 	// * 对处理T的函数的要求，如果它能处理任何基类，那么它也能处理T
+> 	// * 例如可以传Consumer<Object>，这个函数连Object都可以处理，那么它一定可以处理类型T
+> 	void forEach(Consumer<? super T> action);
+> 	...
 > }
 > ~~~
 >
@@ -758,25 +750,27 @@
 >
 > ~~~java
 > public static <T> void doInOrderAsync(
-> 		Supplier<T> first, Consumer<T> second, Consumer<Throwable> handler
-> 	)
+> 	Supplier<T> first, Consumer<T> second, Consumer<Throwable> handler
+> )
 > ~~~
 >
 > (2) 改为使用泛型通配符
 >
 > ~~~java
 > public static <T> void doInOrderAsync(
-> 	Supplier<? extends T> first, // 输出使用协变，输出的对象当做类型T来给下游
->     Consumer<? super T> second,  // 输入使用逆变，这个函数要能够处理输入类型为T的对象
->     Consumer<? super Throwable> handler // 输入使用逆变，这个函数要能处理类型为Throwable的异常
-> )
+> 	Supplier<? extends T> first, 		// 输出使用协变，输出的对象当做类型T来给下游
+> 	Consumer<? super T> second,  		// 输入使用逆变，这个函数要能够处理输入类型为T的对象
+> 	Consumer<? super Throwable> handler // 输入使用逆变，这个函数要能处理类型为Throwable的异常
+> ) {
+>     ...
+> }
 > ~~~
 
 不能使用泛型通配符的例外情况：输入输出类型相依赖、逆变协变相互抵消
 
 > 例如
 >
-> ~~~
+> ~~~java
 > T reduce(T identity, BinaryOperator<T> accumulator)
 > ~~~
 

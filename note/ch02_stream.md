@@ -234,7 +234,7 @@
 > 
 > // 静态方法 File.lines
 > try (Stream<String> lines = Files.lines(path, StandardCharsets.UTF_8)) {
->    show ("Files.lines(path, StandardCharsets.UTF_8)", lines);
+>    	show ("Files.lines(path, StandardCharsets.UTF_8)", lines);
 > }
 > // Files.lines(path, StandardCharsets.UTF_8):
 > // [﻿Project Gutenberg's Alice's Adventures in Wonderland, by Lewis Carroll, , This eBook is for the use of anyone anywhere at no cost and with, almost no restrictions whatsoever.  You may copy it, give it away or, re-use it under the terms of the Project Gutenberg License included, with this eBook or online at www.gutenberg.org, , , Title: Alice's Adventures in Wonderland, , ...]
@@ -266,11 +266,11 @@
 
 > ```java
 > public static Stream<Character> characterStream(String s) {
->    List<Character> result = new ArrayList<>();
->    for (char c : s.toCharArray()) {
->       result.add(c);
->    }
->    return result.stream();
+>    	List<Character> result = new ArrayList<>();
+>    	for (char c : s.toCharArray()) {
+>    		result.add(c);
+>    	}
+>    	return result.stream();
 > }
 > ```
 >
@@ -316,8 +316,8 @@
 > ```java
 > // peek
 > Object[] powers = Stream.iterate(1.0, p -> p * 2)
->    .peek(e -> System.out.println("\t// Fetching " + e))
->    .limit(5).toArray();
+>    	.peek(e -> System.out.println("\t// Fetching " + e))
+>    	.limit(5).toArray();
 > System.out.println("\t// " + Arrays.asList(powers));
 > // Fetching 1.0
 > // Fetching 2.0
@@ -382,7 +382,7 @@
 > ```java
 > Optional<String> largest = strList.stream().max(String::compareToIgnoreCase);
 > if (largest.isPresent()) {
->    System.out.println("\n\t// largest: \n\t// " + largest.get());
+>    	System.out.println("\n\t// largest: \n\t// " + largest.get());
 > }
 > // largest:
 > // zip
@@ -406,9 +406,9 @@
 > ```java
 > Optional<String> startsWithQ1 = strList.stream().filter(s -> s.startsWith("Q")).findFirst();
 > if (startsWithQ1.isPresent()) {
->    System.out.println("\n\t// startsWithQ1.findFirst: \n\t// " + startsWithQ1.get());
+>    	System.out.println("\n\t// startsWithQ1.findFirst: \n\t// " + startsWithQ1.get());
 > } else {
->    System.out.println("\n\t// No word starts with Q");
+>    	System.out.println("\n\t// No word starts with Q");
 > }
 > // startsWithQ1.findFirst:
 > // Quick
@@ -421,9 +421,9 @@
 > ```java
 > Optional<String> startsWithQ2 = strList.stream().parallel().filter(s -> s.startsWith("Q")).findAny();
 > if (startsWithQ2.isPresent()) {
->    System.out.println("\n\t// startsWithQ2.findAny: \n\t// " + startsWithQ2.get());
+>    	System.out.println("\n\t// startsWithQ2.findAny: \n\t// " + startsWithQ2.get());
 > } else {
->    System.out.println("\n\t// No word starts with Q");
+>    	System.out.println("\n\t// No word starts with Q");
 > }
 > // startsWithQ1:
 > // Queen
@@ -498,21 +498,20 @@
 > (2) 提供一个方法用来生成替代值
 >
 > ~~~java
-> result = Optional.<String>empty().orElseGet(
->     () -> System.getProperty("user.dir"));
-> System.out.println("\n\t// result: " + result);
+> result = Optional.<String>empty().orElseGet(() -> System.getProperty("user.dir"));
+>    System.out.println("\n\t// result: " + result);
 > // result: /Users/fangkun/Dev/git/java8fastlearn
 > ~~~
->
-> (3) 以抛出异常作为替代方案 
->
-> ~~~java
+> 
+>(3) 以抛出异常作为替代方案 
+> 
+>~~~java
 > try {
->    result = Optional.<String>empty().orElseThrow(NoSuchElementException::new);
->    System.out.println("\n\t// result: " + result);
-> } catch (Throwable t) {
->    t.printStackTrace();
-> }
+> 	result = Optional.<String>empty().orElseThrow(NoSuchElementException::new);
+>    	System.out.println("\n\t// result: " + result);
+>    } catch (Throwable t) {
+> 	t.printStackTrace();
+>    }
 > // java.util.NoSuchElementException
 > // at java.util.Optional.orElseThrow(Optional.java:290)
 > // at TestCh2Sec07.main(TestCh2Sec07.java:44)
@@ -531,10 +530,10 @@
 >
 >```java
 >public static Optional<Double> inverse(Double x) {
->   return x == 0 ? Optional.empty() : Optional.of(1 / x);
+> 	return x == 0 ? Optional.empty() : Optional.of(1 / x);
 >}
 >public static Optional<Double> squareRoot(Double x) {
->   return x < 0 ? Optional.empty() : Optional.of(Math.sqrt(x));
+> 	return x < 0 ? Optional.empty() : Optional.of(Math.sqrt(x));
 >}
 >```
 >
@@ -643,7 +642,7 @@
 > // iterator()
 > Iterator<Integer> iter = Stream.iterate(0, n -> n + 1).limit(5).iterator();
 > while (iter.hasNext()) {
->    System.out.println(LOG_PREFIX + iter.next());
+>    	System.out.println(LOG_PREFIX + iter.next());
 > }
 > // 0
 > // 1
@@ -658,9 +657,8 @@
 >
 > ```java
 > // toArray(T[]:new)：解决泛型擦除的影响，可以返回T[]
-> Integer[] numbers3 
->     = Stream.iterate(0, n -> n + 1).limit(5).toArray(Integer[]::new);
-> // [Ljava.lang.Integer;@52cc8049
+> Integer[] numbers3  = Stream.iterate(0, n -> n + 1).limit(5).toArray(Integer[]::new);
+>    // [Ljava.lang.Integer;@52cc8049
 > ```
 
 ### 2.9.3 `forEach`
@@ -686,13 +684,13 @@
 > ~~~java
 > // collect(Supplier<R>，BiConsumer<R, ? super T>, BiConsumer<R, R>)
 > HashSet<String> noVowelHashSet
->    = noVowelsStream().collect(HashSet::new, HashSet::add, HashSet::addAll);
+>    	= noVowelsStream().collect(HashSet::new, HashSet::add, HashSet::addAll);
 > // [, Pppr, ccssd, rsrc, tdy, srprsd, kss, rsrch, gssd, vwng]
 > ~~~
 
 #### (2) `collect(Collector)`
 
-> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collector_interface.jpg)
+> <div align="left"><img src="https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collector_interface.jpg" width="800" /></div>
 >
 > `Collector`接口中已经包含了用于生成`supplier`、`accumulator`、`combiner`的方法。而工具类`Collectors`也提供了许多工厂方法来生成这些`Collector`。
 >
@@ -705,7 +703,7 @@
 > // [, Pppr, ccssd, rsrc, tdy, srprsd, kss, rsrch, gssd, vwng]
 > 
 > TreeSet<String> noVowelTreeSet
->    = noVowelsStream().collect(Collectors.toCollection(TreeSet::new));
+>    	= noVowelsStream().collect(Collectors.toCollection(TreeSet::new));
 > // [, B, BFR, BG, BK, BRCH, BST, BSY, BT, BTS]
 > ```
 >
@@ -732,7 +730,7 @@
 
 `Collectors`工具类提供的静态工厂方法如下
 
-> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collectors.jpg)
+> <div align="left"><img src="https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collectors.jpg" width="800" /></div>
 
 ## 2.10 阶段3：将结果收集到Map中
 
@@ -766,7 +764,7 @@
 >
 > 上述两块代码没有指定key相同时的处理方法，当遇到具有相同key的item时，会抛出`IllegalStateException`
 
-### 2.10.2 `Collection.toMap(keyMapper, valueMapper, mergeFunction)`
+### 2.10.2 `Collectors.toMap(keyMapper, valueMapper, mergeFunction)`
 
 > 设置`mergeFunction`可以指定当遇到相同`key`时该如何处理
 >
@@ -799,7 +797,7 @@
 >
 > 备注：上面的功能也可以使用`2.11`的`grouping`来实现
 
-### 2.10.3 `Collection.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier)`
+### 2.10.3 `Collectors.toMap(keyMapper, valueMapper, mergeFunction, mapSupplier)`
 
 > `mapSupplier`用来指定Map的具体实现
 >
@@ -873,7 +871,7 @@
 > Collector<? super T, A, D> downstream
 > ```
 >
-> ![](https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collectors_toXXX.jpg)
+> <div align="left"><img src="https://raw.githubusercontent.com/kenfang119/pics/main/java8fastlearn/java8_stream_collectors_toXXX.jpg" width="800" /></div>
 
 #### (2) 把每个分组的统计值作为收集内容 
 
@@ -998,37 +996,37 @@
 #### (2) 生成原始类型流
 
 > ```java
-> IntStream is1 = IntStream.generate(() -> (int)(Math.random() * 100));
+> IntStream is3 = IntStream.generate(() -> (int)(Math.random() * 100));
 > // [42, 0, 98, 5, 81, ...]
 > 
-> IntStream is2 = IntStream.range(5, 9);
+> IntStream is4 = IntStream.range(5, 9);
 > // [5, 6, 7, 8]
 > 
-> IntStream is3 = IntStream.rangeClosed(5, 9);
+> IntStream is5 = IntStream.rangeClosed(5, 9);
 > // [5, 6, 7, 8, 9]
 > 
-> IntStream is5 = new Random().ints();
+> IntStream is6 new Random().ints();
 > // [-328531074, -978755995, -120081503, 559623620, -1461156362, ...]
 > ```
 
 #### (3) 使用`mapToXXX()`方法计算得到原始类型流
 
 > ```java
-> IntStream is4 = strList.mapToInt(String::length);
+> IntStream  is7 = strList.mapToInt(String::length);
 > // [0, 7, 9, 1, 5, ...]
 > 
 > IntStream codes = someString
->     .codePoints() // UTF-16编码单元组成的IntStream
->     .mapToObj(c -> String.format("%X ", c)) 
->     .collect(Collectors.joining());
+>    	.codePoints() // UTF-16编码单元组成的IntStream
+>    	.mapToObj(c -> String.format("%X ", c)) 
+>    	.collect(Collectors.joining());
 > // 1D546 20 69 73 20 74 68 65 20 73 65 74 20 6F 66 20 6F 63 74 6F 6E 69 6F 6E 73 2E
 > ```
 
 ### 2.12.3 装箱，转换成普通的对象流
 
 > ```java
-> Stream<Integer> integers = IntStream.range(0, 100).boxed();
-> IntStream is5 = integers.mapToInt(Integer::intValue);
+> Stream<Integer> integerStream = IntStream.range(0, 100).boxed();
+> IntStream is8 = integerStream.mapToInt(Integer::intValue);
 > // [0, 1, 2, 3, 4, ...]
 > ```
 
@@ -1064,11 +1062,11 @@
 > ```java
 > int[] shortWords = new int[10];
 > strList.stream().parallel().forEach(
->     s -> {
->         if (s.length() < 10) {
->             shortWords[s.length()]++;
->         }
->     });
+>    	s -> {
+>    		if (s.length() < 10) {
+>    			shortWords[s.length()]++;
+>    		}
+>    	});
 > System.out.println(LOG_PREFIX + Arrays.toString(shortWords));
 > // 三次运行结果都不同、并且没有一次是对的
 > // [1, 1771, 4676, 6996, 5743, 3418, 2135, 1809, 823, 688]
@@ -1084,14 +1082,14 @@
 > // Atomic integers 
 > AtomicInteger[] shortWordCounters = new AtomicInteger[10];
 > for (int i = 0; i < shortWordCounters.length; i++) {
->     shortWordCounters[i] = new AtomicInteger();
+>    	shortWordCounters[i] = new AtomicInteger();
 > }
 > strList.stream().forEach(
->     s -> {
->         if (s.length() < 10) {
->             shortWordCounters[s.length()].getAndIncrement();
->         }
->     });
+>    	s -> {
+>    		if (s.length() < 10) {
+>    			shortWordCounters[s.length()].getAndIncrement();
+>    	}
+>    });
 > System.out.println(LOG_PREFIX + Arrays.toString(shortWordCounters));
 > // 三次运行结果：
 > // [1, 1826, 4999, 7637, 6166, 3589, 2203, 1867, 831, 697]
@@ -1103,11 +1101,11 @@
 
 > ```java
 > System.out.println(
->     LOG_PREFIX +
->     strList.stream().parallel().filter(s -> s.length() < 10).collect(
->        groupingBy(
->           String::length,
->           counting())));
+>    	LOG_PREFIX +
+>    	strList.stream().parallel().filter(s -> s.length() < 10).collect(
+>    		groupingBy(
+>    			String::length,
+>    			counting())));
 > // 三次运行结果：
 > // {0=1, 1=1826, 2=4999, 3=7637, 4=6166, 5=3589, 6=2203, 7=1867, 8=831, 9=697}
 > // {0=1, 1=1826, 2=4999, 3=7637, 4=6166, 5=3589, 6=2203, 7=1867, 8=831, 9=697}
@@ -1152,7 +1150,7 @@
 > ~~~java
 > Stream<String> strStream = strList.stream();
 > strStream.forEach(s -> if (s.length() < 12) {
->     strList.remove(s);
+>    	strList.remove(s);
 > })
 > ~~~
 
