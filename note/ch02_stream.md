@@ -902,13 +902,13 @@
 > 对每个分组下item的`指定计算值`、按照`指定规则`比较的得到的`最大值`/`最小值`，作为收集内容
 >
 > ```java
-> Map<String, Set<String>> countryToLanguages
->         = localeStream().collect(
->                 groupingBy(
->                         Locale::getDisplayCountry,
->                         mapping(Locale::getDisplayLanguage, toSet())
->                 ));
-> // [泰国=[泰文], 巴西=[葡萄牙文], 塞尔维亚及黑山=[塞尔维亚文], 丹麦=[丹麦文], 塞尔维亚=[塞尔维亚文], ...]
+> Map<String, Optional<String>> stateToLongestCityName
+>    	= cityStream().collect(
+>    		groupingBy(
+>    			City::getState,
+>    			mapping(City::getName, maxBy(Comparator.comparing(String::length)))
+>    	));
+> // [DE=Optional[Wilmington], HI=Optional[Honolulu], TX=Optional[North Richland Hills], MA=Optional[Springfield], MD=Optional[Gaithersburg], ...]
 > ```
 
 ##### `Collectors.summarizingInt(ToIntFunction)`/`summarizingLong(ToLongFunction)`/`summarizingDouble(ToDoubleFunction)`
@@ -975,7 +975,7 @@
 
 ### 2.12.1 `IntStream`，`LongStream`，`DoubleStream`
 
-> * `IntStream`：可以用来存储`shart`、`char`、`byte`、`boolean`、`int`
+> * `IntStream`：可以用来存储`short`、`char`、`byte`、`boolean`、`int`
 > * `LongStream`：可以用来存储`long`
 > * `DoubleStream`：可以用来存储`float`、`double`
 
